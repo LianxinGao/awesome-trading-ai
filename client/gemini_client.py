@@ -1,8 +1,10 @@
+import asyncio
+
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 from typing import Literal
-
+from common import tg_tools
 from dotenv import load_dotenv
 import sys
 import os
@@ -12,7 +14,26 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
-prompt = "你是一名精通阿尔布鲁克斯价格行为的短线交易员，你倾向于做盈亏比合理且具有较高一些胜率的交易。请基于当前已走完的K线分析市场行情，并给出下一根K线出现时的交易建议，若下一根K线不入场，则给出观测目标是什么，入场价和止盈止损为空。若入场，采用突破单的方式入场，并给出入场价与止盈止损"
+prompt = """
+你是一名精通阿尔布鲁克斯价格行为的短线交易员，请基于图上信息，基于价格行为进行市场分析并作出是否交易的决策。
+
+# 图表解释
+- 红色为跌，蓝色为涨
+
+# 要求
+1. 盈亏比合理
+2. 要有信号K支持交易，不允许盲目入场
+
+# 输出
+1. price_action_summary: 价格行为分析
+2. next_kline_observation_target: 下一根K线的观察目标
+3. direction: 等待/做多/做空
+4. entry_price: 入场价
+5. take_profit_price: 止盈价
+6. stop_loss_price: 止损价
+
+若direction为等待，则4～6为空字符串即可。
+"""
 
 
 class AiResponse(BaseModel):
@@ -41,4 +62,5 @@ response = client.models.generate_content(
 )
 
 recipe = AiResponse.model_validate_json(response.text)
-print(recipe.model_dump_json(indent=4, ensure_ascii=False))
+result = recipe.model_dump_json(indent=4, ensure_ascii=False)
+final = asyncio.run(tg_tools._tg_bot_http_post(result))

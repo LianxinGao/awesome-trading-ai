@@ -236,17 +236,17 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
 
 if __name__ == "__main__":
     # 获取数据
-    data = asyncio.run(get_kline_with_ema("BTC-USDT-SWAP", 15, 300, 2))
+    data = asyncio.run(get_kline_with_ema("BTC-USDT-SWAP", 15, 200, 2))
     print("Data shape:", data.shape)
     print(data.tail())
     
     # 示例标记数据
     markers = [
-        {'timestamp': '2025-12-26 15:00:00', 'text': 'latest kline'},
+        # {'timestamp': '2025-12-26 15:45:00', 'text': 'latest kline'},
     ]
     
     # 绘制K线图并保存 - 显示全部数据（最多200根）
     fig, ax = plot_candlestick(data, title="BTC-USDT-SWAP 15-min Candlestick Chart", markers=markers)
-    plt.savefig('btc_kline_chart.png', dpi=100, bbox_inches='tight')
+    plt.savefig('btc_kline_chart.png', dpi=200, bbox_inches='tight')
     print("Candlestick chart saved as btc_kline_chart.png")
     plt.close()  # 关闭图形以释放内存
