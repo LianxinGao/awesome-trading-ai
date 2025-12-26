@@ -10,7 +10,6 @@ import okx.Trade as Trade
 import okx.MarketData as MarketData
 import okx.PublicData as PublicData
 import okx.TradingData as TradingData
-from keyring.backends.libsecret import available
 
 from client.ok_models import CompletedTicket
 from client.ok_models import OrderType, TdMode, Ticket

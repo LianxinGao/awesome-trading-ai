@@ -242,7 +242,7 @@ if __name__ == "__main__":
     
     # 示例标记数据
     markers = [
-        # {'timestamp': '2025-12-26 12:30:00', 'text': 'latest kline'},
+        {'timestamp': '2025-12-26 15:00:00', 'text': 'latest kline'},
     ]
     
     # 绘制K线图并保存 - 显示全部数据（最多200根）
