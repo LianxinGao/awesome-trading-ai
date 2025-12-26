@@ -1,16 +1,19 @@
 import asyncio
+import os
+from pathlib import Path
 
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 from typing import Literal
-from common import tg_tools
 from dotenv import load_dotenv
 import sys
-import os
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# 导入common模块
+from common import tg_tools
 
 load_dotenv()
 
@@ -45,7 +48,17 @@ class AiResponse(BaseModel):
     stop_loss_price: str = Field(default="", description="止损价格")
 
 
-with open('../visual/btc_kline_chart.png', 'rb') as f:
+# 构建正确的图片路径
+image_path = Path(__file__).parent / "../visual/btc_kline_chart.png"
+
+if not image_path.exists():
+    # 如果相对路径不存在，尝试从项目根目录开始的路径
+    image_path = Path(__file__).parent.parent / "visual/btc_kline_chart.png"
+
+if not image_path.exists():
+    raise FileNotFoundError(f"btc_kline_chart.png not found at {image_path}")
+
+with open(image_path, 'rb') as f:
     image_bytes = f.read()
 
 client = genai.Client()
