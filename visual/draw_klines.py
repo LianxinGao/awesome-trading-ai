@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime
 import sys
 import os
+from pathlib import Path
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -247,6 +248,10 @@ if __name__ == "__main__":
     
     # 绘制K线图并保存 - 显示全部数据（最多200根）
     fig, ax = plot_candlestick(data, title="BTC-USDT-SWAP 15-min Candlestick Chart", markers=markers)
-    plt.savefig('btc_kline_chart.png', dpi=200, bbox_inches='tight')
-    print("Candlestick chart saved as btc_kline_chart.png")
+    
+    # 保存到根目录下的 data 文件夹
+    root_dir = Path(__file__).parent.parent  # 获取项目根目录
+    output_path = root_dir / "data" / "btc_kline_chart.png"
+    plt.savefig(output_path, dpi=200, bbox_inches='tight')
+    print(f"Candlestick chart saved as {output_path}")
     plt.close()  # 关闭图形以释放内存
