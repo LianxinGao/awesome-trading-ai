@@ -30,8 +30,8 @@ async def run_inst(inst_id: str, interval: int, limit: int, precision: int):
 
     tr_result, tend_result = await asyncio.gather(tr_task, tend_task)
 
-    tr_result['ai_type'] = 'TRADING_RANGE'
-    tend_result['ai_type'] = 'TREND'
+    tr_result['ai_focus'] = 'TRADING_RANGE'
+    tend_result['ai_focus'] = 'TREND'
 
     tr_response = json.dumps(tr_result, indent=2, ensure_ascii=False)
     tend_response = json.dumps(tend_result, indent=2, ensure_ascii=False)
