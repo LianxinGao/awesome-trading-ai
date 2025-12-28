@@ -1,14 +1,15 @@
+import json
 from google import genai
 from google.genai import types
 from pydantic import BaseModel
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Dict, Any
 from dotenv import load_dotenv
 
 load_dotenv()
 
 T = TypeVar('T', bound=BaseModel)
 
-async def request_ai(prompt: str, image_bytes: bytes, response_model: Type[T]) -> str:
+async def request_ai(prompt: str, image_bytes: bytes, response_model: Type[T]) -> Dict[Any, Any]:
     client = genai.Client()
     response = client.models.generate_content(
         model="gemini-3-pro-preview",
@@ -22,5 +23,6 @@ async def request_ai(prompt: str, image_bytes: bytes, response_model: Type[T]) -
         }
     )
     recipe = response_model.model_validate_json(response.text)
-    result = recipe.model_dump_json(indent=4, ensure_ascii=False)
-    return result
+    # 返回字典格式，便于后续添加字段
+    result_dict = recipe.model_dump()
+    return result_dict

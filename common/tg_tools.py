@@ -6,7 +6,7 @@ logger = logging.Logger(__name__)
 
 tg_api_url = f"https://api.telegram.org/bot"
 
-async def _tg_bot_http_post(message_text):
+async def tg_bot_http_post(message_text):
     api_url = f"{tg_api_url}{settings.tg_bot_token}/sendMessage"
 
     # 构建请求体
@@ -40,4 +40,4 @@ async def _tg_bot_http_post(message_text):
 
 if __name__ == '__main__':
     import asyncio
-    asyncio.run(_tg_bot_http_post("ojbk, Mr Zhou!"))
+    asyncio.run(tg_bot_http_post("ojbk, Mr Zhou!"))
