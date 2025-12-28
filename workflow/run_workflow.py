@@ -33,8 +33,8 @@ async def run_inst(inst_id: str, interval: int, limit: int, precision: int):
     tr_result['symbol'] = inst_id
     tend_result['symbol'] = inst_id
 
-    tr_result['ai_focus_on'] = 'TRADING_RANGE'
-    tend_result['ai_focus_on'] = 'TREND'
+    tr_result['ai_focus_on'] = '震荡区间'
+    tend_result['ai_focus_on'] = '趋势行情'
 
     tr_response = json.dumps(tr_result, indent=2, ensure_ascii=False)
     tend_response = json.dumps(tend_result, indent=2, ensure_ascii=False)
