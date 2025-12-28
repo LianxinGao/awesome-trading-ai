@@ -42,10 +42,10 @@ async def run_inst(inst_id: str, interval: int, limit: int, precision: int):
 
 
     if tr_result['direction'] != '等待':
-        await tg_tools.tg_bot_http_post(tr_result)
+        await tg_tools.tg_bot_http_post(tr_response)
 
     if tend_result['direction'] != '等待':
-        await tg_tools.tg_bot_http_post(tend_result)
+        await tg_tools.tg_bot_http_post(tend_response)
 
 async def run_workflow():
     tasks = []
