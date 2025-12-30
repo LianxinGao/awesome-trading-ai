@@ -29,7 +29,7 @@ auto_trade_prompts = dedent("""\
 # Data
 0~9号的具体数据如下：{latest_klines}
 
-# Output（用中文进行回答）
+# Output
 1. market_context：简短描述当前市场背景 (e.g., Bull Trend / Trading Range)
 2. setup_identified：识别出的 ABPA 模式 (e.g., Low 2 in Bear Trend)
 3. signal_bar_index：0-9中的某根K线编号
@@ -39,5 +39,7 @@ auto_trade_prompts = dedent("""\
 7. stop_loss：止损价
 8. take_profit：止盈价
 
-若action为WAIT，则6~8为空字符串即可
+## 注意
+- 若action为WAIT，则6~8为空字符串即可
+- 除了ABPA中的概念可以用英文，其他统一用中文进行阐述
 """)
