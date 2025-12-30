@@ -15,10 +15,13 @@ trading_range_prompt = dedent(
 3. 重点观察是否存在“第二次进入（Second Entry）”机会（如 High 2 或 Low 2）。
 4. 警惕虚假突破：区间内的强趋势棒往往是诱多/诱空。
 
-# Analysis Steps (Visual Input)
-- 评估最新K线相对于 EMA 21 的位置（区间内 EMA 通常走平且K线频繁穿过）。
+# Analysis Steps
+- 评估最新K线相对于 EMA 21 的位置
 - 检查K线重叠程度（Overlap）：重叠高则震荡信号明确。
 - 寻找磁力位（Magnets）：前期的波段高低点。
+
+# 图表说明
+- 图片右下角有从0～9标记的按时间顺序排列的最新的10根K线，它们的具体数据为: {latest_klines}
 
 # Output Format
 1. market_cycle_analysis: 当前区间的上/下界定义及价格行为描述。
@@ -47,10 +50,13 @@ trend_prompts = """
 3. 观察是否存在“突破后的跟随（Follow-through）”：连续的同色大实体K线。
 4. 止损通常设在最近的一个波段高/低点，而非紧贴K线。
 
-# Analysis Steps (Visual Input)
+# Analysis Steps
 - 观察 EMA 21 的斜率：斜率越大，趋势越强。
 - 检查K线实体：是否存在连续 3 根以上且影线极短的趋势棒？
 - 识别“缺口（Gaps）”：衡量市场真空区的力量。
+
+# 图表说明
+- 图片右下角有从0～9标记的按时间顺序排列的最新的10根K线，它们的具体数据为: {latest_klines}
 
 # Output Format
 1. trend_phase: (e.g., Bull Spike, Bear Channel, Early Breakout)

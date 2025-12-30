@@ -13,6 +13,23 @@ from coin_configs import coin_configs
 
 async def run_inst(inst_id: str, interval: int, limit: int, precision: int):
     klines = await get_kline_with_ema(inst_id, interval, limit, precision)
+    
+    # 取出klines df里面的最后10条数据，组装成dict，key从0-9，value每一个value都是ohlc的数据
+    last_10_rows = klines.tail(10).reset_index(drop=True)
+    last_10_dict = {}
+    for i in range(min(10, len(last_10_rows))):
+        row = last_10_rows.iloc[i]
+        last_10_dict[i] = {
+            'open': row['open'],
+            'high': row['high'],
+            'low': row['low'],
+            'close': row['close'],
+            'ema21': row['ema21']
+        }
+    
+    # 将字典dump成str类型
+    last_10_str = json.dumps(last_10_dict, ensure_ascii=False)
+
     markers = [
         # {'timestamp': '2025-12-26 15:45:00', 'text': 'latest kline'},
     ]
@@ -25,8 +42,11 @@ async def run_inst(inst_id: str, interval: int, limit: int, precision: int):
     img_buffer.seek(0)  # 移动到缓冲区开头
     image_bytes = img_buffer.getvalue()
 
-    tr_task = request_ai(trading_range_prompt, image_bytes, TradingRangeResponse)
-    tend_task = request_ai(trend_prompts, image_bytes, TrendResponse)
+    tr_prompt = trading_range_prompt.format(latest_klines=last_10_str)
+    trend_prompt = trend_prompts.format(latest_klines=last_10_str)
+
+    tr_task = request_ai(tr_prompt, image_bytes, TradingRangeResponse)
+    tend_task = request_ai(trend_prompt, image_bytes, TrendResponse)
 
     tr_result, tend_result = await asyncio.gather(tr_task, tend_task)
 
