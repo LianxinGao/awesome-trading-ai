@@ -18,7 +18,7 @@ auto_trade_prompts = dedent("""\
 入场必须基于一个清晰的信号棒（如：强趋势棒、反转反转棒、长影线拒绝棒）。
 
 # Operational Constraints
-- 执行模式: 仅采用“计划委托”。每笔交易必须包含明确的：入场价 (Entry)、止盈价 (Take Profit)、止损价 (Stop Loss)
+- 执行模式: 仅采用“计划委托”。每笔交易必须包含明确的：入场价、止盈价、止损价
 - 风险管理: 止损通常设在信号棒的下方/上方一个点位，或者最近的波动极值点。止盈基于测量运动（Measured Move）或前高/前低。
 
 # Task Workflow
@@ -29,7 +29,7 @@ auto_trade_prompts = dedent("""\
 # Data
 0~9号的具体数据如下：{latest_klines}
 
-# Output
+# Output（用中文进行回答）
 1. market_context：简短描述当前市场背景 (e.g., Bull Trend / Trading Range)
 2. setup_identified：识别出的 ABPA 模式 (e.g., Low 2 in Bear Trend)
 3. signal_bar_index：0-9中的某根K线编号
