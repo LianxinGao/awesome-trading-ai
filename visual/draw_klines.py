@@ -222,6 +222,15 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
     # 设置y轴范围，增加一些空间让图表更美观，为标记预留空间
     ax.set_ylim(min(all_prices) - bottom_buffer, max(all_prices) + top_buffer)
     
+    # 为最后10根K线添加数字标记（0-9），统一排列在图表最下方
+    num_last_klines = min(10, len(data))
+    last_klines_data = data.tail(num_last_klines)
+    for idx, (i, row) in enumerate(last_klines_data.iterrows()):
+        timestamp = mdates.date2num(row['timestamp'])
+        # 将数字标记统一排列在图表底部
+        ax.text(timestamp, min(all_prices) - bottom_buffer * 0.7, str(idx), 
+                fontsize=10, color='purple', fontweight='bold', ha='center', va='top', zorder=5)
+    
     # 添加网格
     ax.grid(True, linestyle='--', alpha=0.3)
     
@@ -248,7 +257,7 @@ if __name__ == "__main__":
     
     # 绘制K线图并保存 - 显示全部数据（最多200根）
     fig, ax = plot_candlestick(data, title="BTC-USDT-SWAP 15-min Candlestick Chart", markers=markers)
-    
+    # plt.show()
     # 保存到根目录下的 data 文件夹
     root_dir = Path(__file__).parent.parent  # 获取项目根目录
     output_path = root_dir / "data" / "btc_kline_chart.png"
