@@ -7,8 +7,9 @@ from coin_configs import coin_configs
 
 
 for config in coin_configs:
-    result = ok_client.set_leverage(config['inst_id'], "100", TdMode.CROSS)
-    print(f"设置合约杠杆为{config.LEVERAGE}倍: {result}")
+    inst_id = config['inst_id']
+    result = ok_client.set_leverage(inst_id, "100", TdMode.CROSS)
+    print(f"设置{inst_id}的合约杠杆为100倍")
 
 trading_scheduler = TradingScheduler(agent_func=run_workflow)
 asyncio.run(trading_scheduler.start_with_immediate_execution())
