@@ -3,5 +3,5 @@ coin_configs = [
 ]
 
 evaluate_configs = {
-    "begin": "2025-12-30 00:00:00"
+    "begin": "2025-12-31 15:00:00"
 }
