@@ -100,12 +100,17 @@ async def run_workflow():
     else:
         tasks = []
         for coin_config in coin_configs:
-            ok_client.set_leverage(coin_config['inst_id'], coin_config['leverage'], TdMode.CROSS)
-            print(f"设置{coin_config['inst_id']}的合约杠杆为{coin_config['leverage']}倍")
-            task = run_inst(
-                coin_config['inst_id'], coin_config['interval'], coin_config['limit'], coin_config['precision'],
-                coin_configs['sz']
-            )
+            inst_id = coin_config['inst_id']
+            interval = coin_config['interval']
+            limit = coin_config['limit']
+            precision = coin_config['precision']
+            sz = coin_config['sz']
+            leverage = coin_config['leverage']
+
+            ok_client.set_leverage(inst_id, leverage, TdMode.CROSS)
+            print(f"设置{inst_id}的合约杠杆为{leverage}倍")
+
+            task = run_inst(inst_id, interval, limit, precision, sz)
             tasks.append(task)
 
         await asyncio.gather(*tasks)
