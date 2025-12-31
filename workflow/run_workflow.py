@@ -64,6 +64,7 @@ async def run_inst(inst_id: str, interval: int, limit: int, precision: int):
         end = str(datetime.now().replace(microsecond=0))
         eval_result = ticket_factory.evaluate_trade(inst_id, evaluate_configs['begin'], end)
         auto_response_to_tg = json.dumps({
+            'symbol': inst_id,
             'ai_analysis': auto_result,
             'trading_history': eval_result
         }, indent=2, ensure_ascii=False)
