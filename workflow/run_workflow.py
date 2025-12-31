@@ -3,6 +3,7 @@ from ai.gemini_client import request_ai
 from ai.models import TradingRangeResponse, TrendResponse, AutoTradeResponse
 from ai.prompts import trend_prompts, trading_range_prompt
 from ai.auto_prompts import auto_trade_prompts
+from client.ok_models import TdMode
 from visual.draw_klines import plot_candlestick
 from visual.prepare_draw_data import get_kline_with_ema
 import matplotlib.pyplot as plt
@@ -99,6 +100,8 @@ async def run_workflow():
     else:
         tasks = []
         for coin_config in coin_configs:
+            ok_client.set_leverage(coin_config['inst_id'], coin_config['leverage'], TdMode.CROSS)
+            print(f"设置{coin_config['inst_id']}的合约杠杆为{coin_config['leverage']}倍")
             task = run_inst(
                 coin_config['inst_id'], coin_config['interval'], coin_config['limit'], coin_config['precision'],
                 coin_configs['sz']
