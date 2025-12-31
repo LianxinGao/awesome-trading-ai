@@ -15,7 +15,7 @@ from client import ok_client
 from factory import ticket_factory
 from datetime import datetime
 
-async def run_inst(inst_id: str, interval: int, limit: int, precision: int, sz: str):
+async def run_inst(inst_id: str, interval: int, limit: int, precision: int, sz: int):
     ticket_factory.cancel_algo_order(inst_id)
 
     klines = await get_kline_with_ema(inst_id, interval, limit, precision)
