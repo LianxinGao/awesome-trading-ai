@@ -34,6 +34,7 @@ class AutoTradeResponse(BaseModel):
     market_context: str = Field(description="市场背景")
     setup_identified: str = Field(description="识别出的ABPA形态")
     signal_bar_index: int = Field(description="0-9中的某根K线编号")
+    follow_bar_index: int = Field(description="0-9中的某根K线编号")
     action: Literal['BUY', 'SELL', 'WAIT'] = Field(description="多空方向")
     reasoning: str = Field(description="基于Brooks理论具体的逻辑分析")
     entry_price: str = Field(default="", description="入场价")
