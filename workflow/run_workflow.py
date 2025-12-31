@@ -14,7 +14,7 @@ from client import ok_client
 from factory import ticket_factory
 from datetime import datetime
 
-async def run_inst(inst_id: str, interval: int, limit: int, precision: int):
+async def run_inst(inst_id: str, interval: int, limit: int, precision: int, sz: str):
     ticket_factory.cancel_algo_order(inst_id)
 
     klines = await get_kline_with_ema(inst_id, interval, limit, precision)
@@ -57,7 +57,7 @@ async def run_inst(inst_id: str, interval: int, limit: int, precision: int):
             side = 'buy'
         else:
             side = 'sell'
-        ticket_factory.order_algo_order(inst_id, side, 1,
+        ticket_factory.order_algo_order(inst_id, side, sz,
                                                  auto_result['entry_price'],
                                                  auto_result['take_profit'],
                                                  auto_result['stop_loss'])
@@ -99,7 +99,10 @@ async def run_workflow():
     else:
         tasks = []
         for coin_config in coin_configs:
-            task = run_inst(coin_config['inst_id'], coin_config['interval'], coin_config['limit'], coin_config['precision'])
+            task = run_inst(
+                coin_config['inst_id'], coin_config['interval'], coin_config['limit'], coin_config['precision'],
+                coin_configs['sz']
+            )
             tasks.append(task)
 
         await asyncio.gather(*tasks)
