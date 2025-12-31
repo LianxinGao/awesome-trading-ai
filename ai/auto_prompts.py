@@ -15,10 +15,10 @@ auto_trade_prompts = dedent("""\
 # 交易限制
 - 执行模式: 仅采用“计划委托”。每笔交易必须包含明确的：入场价、止盈价、止损价
 - 风险管理: 止损通常设在信号K线的下方/上方一个点位，或者最近的波动极值点。止盈基于测量运动（Measured Move）或前高/前低。
-- 盈亏比: 盈亏比至少1:1
+- 盈亏比: 盈利距离必须大于亏损距离, 至少1:1
 
 # Data
-0~9号的具体数据如下：{latest_klines}
+0~9号的K线的具体数据如下：{latest_klines}
 
 # Output
 1. market_context：简短描述当前市场背景 (e.g., Bull Trend / Trading Range)
