@@ -20,8 +20,9 @@ auto_trade_prompts = dedent("""\
     - 止盈基于测量运动（Measured Move）或前高/前低或其他目标位。止盈点位可略低于目标位，确保能够第一时间成交。
 
 # Data
-15分钟周期下，0~9号的K线的具体数据如下：{latest_klines_15min}
-4小时周期下，0~9号的K线的具体数据如下：{latest_klines_4h}
+15分钟周期下，0~9号的K线的具体数据如下(9号K线为已完成K线)：{latest_klines_15min}
+4小时周期下，0~9号的K线的具体数据如下(9号K线为未完成K线)：{latest_klines_4h}
+
 
 # Output
 1. market_context：简短描述当前市场背景 (e.g., Bull Trend / Trading Range)
