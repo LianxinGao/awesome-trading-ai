@@ -1,5 +1,5 @@
 coin_configs = [
-    {"inst_id": "BTC-USDT-SWAP", "intervals": [15, 240], "limit": 200, "precision": 2, 'sz': 0.5, 'leverage': '100'}
+    {"inst_id": "BTC-USDT-SWAP", "intervals": [15, 240], "limit": 200, "precision": 2, 'sz': 0.1, 'leverage': '100'}
 ]
 
 monitoring_configs = [
