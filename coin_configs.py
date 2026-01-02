@@ -1,9 +1,9 @@
 coin_configs = [
-    {"inst_id": "XAUT-USDT-SWAP", "intervals": [15, 240], "limit": 200, "precision": 2, 'sz': 5, 'leverage': '50'}
+    {"inst_id": "BTC-USDT-SWAP", "intervals": [15, 240], "limit": 200, "precision": 2, 'sz': 0.5, 'leverage': '50'}
 ]
 
 monitoring_configs = [
-    {"inst_id": "XAUT-USDT-SWAP", "interval": 15, "limit": 200, "precision": 2}
+    {"inst_id": "BTC-USDT-SWAP", "interval": 15, "limit": 200, "precision": 2}
 ]
 
 evaluate_configs = {
