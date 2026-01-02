@@ -15,13 +15,8 @@ from client import ok_client
 from factory import ticket_factory
 from datetime import datetime
 
-async def run_inst(inst_id: str, interval: int, limit: int, precision: int, sz: int):
-    ticket_factory.cancel_algo_order(inst_id)
-
-    klines = await get_kline_with_ema(inst_id, interval, limit, precision)
-    
-    # 取出klines df里面的最后10条数据，组装成dict，key从0-9，value每一个value都是ohlc的数据
-    last_10_rows = klines.tail(10).reset_index(drop=True)
+def get_last_10_rows(df):
+    last_10_rows = df.tail(10).reset_index(drop=True)
     last_10_dict = {}
     for i in range(min(10, len(last_10_rows))):
         row = last_10_rows.iloc[i]
@@ -32,14 +27,13 @@ async def run_inst(inst_id: str, interval: int, limit: int, precision: int, sz: 
             'close': row['close'],
             'ema21': row['ema21']
         }
-    
-    # 将字典dump成str类型
     last_10_str = json.dumps(last_10_dict, ensure_ascii=False)
+    return last_10_str
 
-    markers = [
-        # {'timestamp': '2025-12-26 15:45:00', 'text': 'latest kline'},
-    ]
-    fig, ax = plot_candlestick(klines, title=f"{inst_id} 15-min Candlestick Chart", markers=markers)
+def draw_klines(klines_data, title, markers = None):
+    if not markers:
+        markers = []
+    fig, ax = plot_candlestick(klines_data, title=title, markers=markers)
     img_buffer = io.BytesIO()
     plt.savefig(img_buffer, format='png', dpi=200, bbox_inches='tight')
     plt.close(fig)
@@ -47,9 +41,27 @@ async def run_inst(inst_id: str, interval: int, limit: int, precision: int, sz: 
     # 获取图像字节数据
     img_buffer.seek(0)  # 移动到缓冲区开头
     image_bytes = img_buffer.getvalue()
+    return image_bytes
 
-    auto_prompt = auto_trade_prompts.format(latest_klines=last_10_str)
-    auto_result = await request_ai(auto_prompt, image_bytes, AutoTradeResponse)
+async def run_inst(inst_id: str, intervals: list[int], limit: int, precision: int, sz: int):
+    ticket_factory.cancel_algo_order(inst_id)
+
+    klines_15min = await get_kline_with_ema(inst_id, intervals[0], limit, precision)
+    klines_4h = await get_kline_with_ema(inst_id, intervals[1], limit, precision)
+    
+    last_10_str_15min = get_last_10_rows(klines_15min)
+    last_10_str_4h = get_last_10_rows(klines_4h)
+
+    # markers = [
+    #     # {'timestamp': '2025-12-26 15:45:00', 'text': 'latest kline'},
+    # ]
+    image_bytes_15min = draw_klines(klines_15min, f"{inst_id} 15-min Candlestick Chart")
+    image_bytes_4h = draw_klines(klines_4h, f"{inst_id} 4h Candlestick Chart")
+
+
+    auto_prompt = auto_trade_prompts.format(latest_klines_15min=last_10_str_15min,
+                                            latest_klines_4h=last_10_str_4h)
+    auto_result = await request_ai(auto_prompt, [image_bytes_15min, image_bytes_4h], AutoTradeResponse)
     auto_response = json.dumps(auto_result, indent=2, ensure_ascii=False)
     print(auto_response)
     action = auto_result['action']
@@ -101,7 +113,7 @@ async def run_workflow():
         tasks = []
         for coin_config in coin_configs:
             inst_id = coin_config['inst_id']
-            interval = coin_config['interval']
+            intervals = coin_config['intervals']
             limit = coin_config['limit']
             precision = coin_config['precision']
             sz = coin_config['sz']
@@ -110,7 +122,7 @@ async def run_workflow():
             ok_client.set_leverage(inst_id, leverage, TdMode.CROSS)
             print(f"设置{inst_id}的合约杠杆为{leverage}倍")
 
-            task = run_inst(inst_id, interval, limit, precision, sz)
+            task = run_inst(inst_id, intervals, limit, precision, sz)
             tasks.append(task)
 
         await asyncio.gather(*tasks)

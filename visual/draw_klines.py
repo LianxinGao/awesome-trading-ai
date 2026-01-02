@@ -246,7 +246,7 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
 
 if __name__ == "__main__":
     # 获取数据
-    data = asyncio.run(get_kline_with_ema("XAUT-USDT-SWAP", 15, 200, 2))
+    data = asyncio.run(get_kline_with_ema("XAUT-USDT-SWAP", 240, 200, 2))
     print("Data shape:", data.shape)
     print(data.tail())
     
@@ -256,11 +256,11 @@ if __name__ == "__main__":
     ]
     
     # 绘制K线图并保存 - 显示全部数据（最多200根）
-    fig, ax = plot_candlestick(data, title="ETH-USDT-SWAP 15-min Candlestick Chart", markers=markers)
+    fig, ax = plot_candlestick(data, title="XAUT-USDT-SWAP 4-hour Candlestick Chart", markers=markers)
     # plt.show()
     # 保存到根目录下的 data 文件夹
     root_dir = Path(__file__).parent.parent  # 获取项目根目录
-    output_path = root_dir / "data" / "btc_kline_chart.png"
+    output_path = root_dir / "data" / "btc_kline_chart4.png"
     plt.savefig(output_path, dpi=200, bbox_inches='tight')
     print(f"Candlestick chart saved as {output_path}")
     plt.close()  # 关闭图形以释放内存

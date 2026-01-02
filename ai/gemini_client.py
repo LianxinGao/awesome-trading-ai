@@ -9,14 +9,13 @@ load_dotenv()
 
 T = TypeVar('T', bound=BaseModel)
 
-async def request_ai(prompt: str, image_bytes: bytes, response_model: Type[T]) -> Dict[Any, Any]:
+async def request_ai(prompt: str, image_bytes_list: list[bytes], response_model: Type[T]) -> Dict[Any, Any]:
+    image_datas = [types.Part.from_bytes(data=image_bytes, mime_type='image/png') for image_bytes in image_bytes_list]
+    contents = image_datas + [prompt]
     client = genai.Client()
     response = client.models.generate_content(
         model="gemini-3-pro-preview",
-        contents=[
-            types.Part.from_bytes(data=image_bytes, mime_type='image/png'),
-            prompt
-        ],
+        contents=contents,
         config={
             "response_mime_type": "application/json",
             "response_json_schema": response_model.model_json_schema(),
