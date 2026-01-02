@@ -279,7 +279,7 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
 
 if __name__ == "__main__":
     # 获取数据
-    data = asyncio.run(get_kline_with_ema("XAUT-USDT-SWAP", 15, 200, 2))
+    data = asyncio.run(get_kline_with_ema("XAUT-USDT-SWAP", 240, 200, 2, False))
     print("Data shape:", data.shape)
     print(data.tail())
     

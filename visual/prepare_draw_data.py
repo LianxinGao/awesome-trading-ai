@@ -2,8 +2,8 @@ from client import ok_client
 import talib
 
 
-async def get_kline_with_ema(inst_id, interval, limit, precision):
-    klines = await ok_client.get_klines(inst_id, interval, limit, exclude_unconfirmed_bar= True)
+async def get_kline_with_ema(inst_id, interval, limit, precision, exclude_unconfirmed_bar = True):
+    klines = await ok_client.get_klines(inst_id, interval, limit, exclude_unconfirmed_bar= exclude_unconfirmed_bar)
 
     name = f'ema21'
     klines['close'] = klines['close'].astype(float)

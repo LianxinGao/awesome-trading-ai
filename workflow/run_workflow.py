@@ -46,7 +46,7 @@ async def run_inst(inst_id: str, intervals: list[int], limit: int, precision: in
     ticket_factory.cancel_algo_order(inst_id)
 
     klines_15min = await get_kline_with_ema(inst_id, intervals[0], limit, precision)
-    klines_4h = await get_kline_with_ema(inst_id, intervals[1], limit, precision)
+    klines_4h = await get_kline_with_ema(inst_id, intervals[1], limit, precision, False)
     
     last_10_str_15min = get_last_10_rows(klines_15min)
     last_10_str_4h = get_last_10_rows(klines_4h)
