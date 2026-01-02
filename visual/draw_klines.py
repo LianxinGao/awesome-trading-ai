@@ -84,7 +84,7 @@ def find_local_extrema(data, window_size=11):
     return local_maxima, local_minima
 
 
-def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=None):
+def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=None, entry_price=None, entry_type=None):
     """
     绘制K线图（蜡烛图）
     
@@ -93,6 +93,8 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
         title: 图表标题
         figsize: 图表大小
         markers: 标记列表，格式为[{'timestamp': timestamp, 'text': 'text'}, ...]
+        entry_price: 成本价，如果不为空，则在图上以水平的虚线标记出成本价
+        entry_type: 交易类型，'buy' 或 'sell'，如果不为空，则在成本价标签中显示交易类型
     """
     # 确保数据按时间排序
     data = data.copy()
@@ -200,6 +202,28 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
                        ha='center',
                        zorder=4)
     
+    # 添加成本价水平虚线
+    if entry_price is not None:
+        # 根据交易类型设置标签文本
+        if entry_type and entry_type.lower() in ['buy', 'sell']:
+            label_text = f'Entry Price ({entry_type.upper()} at {entry_price:.2f})'
+            # 在虚线上方添加成本价和交易类型标签
+            # 获取x轴的范围
+            x_min, x_max = ax.get_xlim()
+            # 在图表左侧添加成本价标签，包含交易类型
+            ax.text(x_min, entry_price, f'  {entry_type.upper()} at {entry_price:.2f}', 
+                    fontsize=10, color='purple', fontweight='bold', ha='left', va='bottom', zorder=5)
+        else:
+            label_text = f'Entry Price: {entry_price:.2f}'
+            # 获取x轴的范围
+            x_min, x_max = ax.get_xlim()
+            # 在图表左侧添加成本价标签
+            ax.text(x_min, entry_price, f'  {entry_price:.2f}', 
+                    fontsize=10, color='purple', fontweight='bold', ha='left', va='bottom', zorder=5)
+        
+        # 绘制水平虚线表示成本价
+        ax.axhline(y=entry_price, color='purple', linestyle='--', linewidth=1.5, alpha=0.8, label=label_text, zorder=3)
+    
     # 设置x轴格式
     # 根据数据量调整x轴标签密度
     if len(data) <= 50:
@@ -234,9 +258,18 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
     # 添加网格
     ax.grid(True, linestyle='--', alpha=0.3)
     
-    # 添加图例（如果EMA21存在）
+    # 添加图例（如果EMA21存在或成本价标记）
+    legend_elements = []
     if 'ema21' in data.columns and not data['ema21'].isna().all():
-        ax.legend(loc='upper left')
+        legend_elements.append(plt.Line2D([0], [0], color='#FF6600', linewidth=1.5, label='EMA21'))
+    if entry_price is not None:
+        if entry_type and entry_type.lower() in ['buy', 'sell']:
+            legend_elements.append(plt.Line2D([0], [0], color='purple', linestyle='--', linewidth=1.5, label=f'Entry Price ({entry_type.upper()} at {entry_price:.2f})'))
+        else:
+            legend_elements.append(plt.Line2D([0], [0], color='purple', linestyle='--', linewidth=1.5, label=f'Entry Price: {entry_price:.2f}'))
+    
+    if legend_elements:
+        ax.legend(handles=legend_elements, loc='upper left')
     
     # 自动调整布局
     plt.tight_layout()
@@ -246,7 +279,7 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
 
 if __name__ == "__main__":
     # 获取数据
-    data = asyncio.run(get_kline_with_ema("XAUT-USDT-SWAP", 240, 200, 2))
+    data = asyncio.run(get_kline_with_ema("XAUT-USDT-SWAP", 15, 200, 2))
     print("Data shape:", data.shape)
     print(data.tail())
     
@@ -256,11 +289,12 @@ if __name__ == "__main__":
     ]
     
     # 绘制K线图并保存 - 显示全部数据（最多200根）
-    fig, ax = plot_candlestick(data, title="XAUT-USDT-SWAP 4-hour Candlestick Chart", markers=markers)
+    fig, ax = plot_candlestick(data, title="XAUT-USDT-SWAP 15-min Candlestick Chart", markers=markers,
+                               entry_price=4390, entry_type='buy')
     # plt.show()
     # 保存到根目录下的 data 文件夹
     root_dir = Path(__file__).parent.parent  # 获取项目根目录
-    output_path = root_dir / "data" / "btc_kline_chart4.png"
+    output_path = root_dir / "data" / "btc_kline_chart.png"
     plt.savefig(output_path, dpi=200, bbox_inches='tight')
     print(f"Candlestick chart saved as {output_path}")
     plt.close()  # 关闭图形以释放内存

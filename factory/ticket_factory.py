@@ -89,12 +89,12 @@ def evaluate_trade(inst_id, begin, end):
     return json_data
 
 if __name__ == '__main__':
-    inst_id = "ETH-USDT-SWAP"
+    # inst_id = "ETH-USDT-SWAP"
     # res = order_position(inst_id, "sell", "1", "2.82", "2.84", entry_price="2.83")
     # print(res)
-    result = cancel_algo_order(inst_id)
-    print(result)
-    # res = get_ticket_data()
-    # print(res)
+    # result = cancel_algo_order(inst_id)
+    # print(result)
+    res = get_ticket_data()
+    print(res)
     # res = order_position(inst_id, "buy", sz, 2.87, 2.86)
     # print(res)

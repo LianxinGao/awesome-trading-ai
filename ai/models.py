@@ -40,3 +40,9 @@ class AutoTradeResponse(BaseModel):
     entry_price: str = Field(default="", description="入场价")
     stop_loss: str = Field(default="", description="止损价")
     take_profit: str = Field(default="", description="止盈价")
+
+class MonitoringResponse(BaseModel):
+    market_cycle_analysis: str = Field(description="对15分钟图整体背景的定义")
+    current_risk_level: str = Field(description="当前风险等级及理由")
+    action: Literal['HOLD', 'EXIT'] = Field(description="当前仓位操作")
+    reasoning: str = Field(description="基于Brooks理论具体的逻辑分析,先论述背景逻辑,再论述细节理由")
