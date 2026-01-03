@@ -31,12 +31,14 @@ class TrendResponse(BaseModel):
     confidence_score: int = Field(description="1-10分")
 
 class AutoTradeResponse(BaseModel):
-    market_context: str = Field(description="市场背景")
-    setup_identified: str = Field(description="识别出的ABPA形态")
+    market_context_4h: str = Field(description="简述4小时图的大趋势及关键S/R位")
+    market_context_15min: str = Field(description="简述当前15分钟图的阶段（Trend/Range/Channel）及关键点位")
+    s_r_levels: str = Field(description="列出当前可见的最重要的支撑位和压力位")
+    setup_identified: str = Field(description="识别出的 ABPA 模式 (例如: MTR, High 2, Wedge Bull Flag)")
     signal_bar_index: int = Field(description="0-9中的某根K线编号")
-    follow_bar_index: int = Field(default="", description="0-9中的某根K线编号")
+    # follow_bar_index: int = Field(default="", description="0-9中的某根K线编号")
+    reasoning: str = Field(description="基于ABPA理论逻辑，解释为何当前位置胜率较高。")
     action: Literal['BUY', 'SELL', 'WAIT'] = Field(description="多空方向")
-    reasoning: str = Field(description="基于Brooks理论具体的逻辑分析")
     entry_price: str = Field(default="", description="入场价")
     stop_loss: str = Field(default="", description="止损价")
     take_profit: str = Field(default="", description="止盈价")

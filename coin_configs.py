@@ -7,5 +7,5 @@ monitoring_configs = [
 ]
 
 evaluate_configs = {
-    "begin": "2026-01-02 22:40:00"
+    "begin": "2026-01-03 13:35:00"
 }

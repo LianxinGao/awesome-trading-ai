@@ -102,15 +102,15 @@ async def run_workflow():
     tickest = ticket_factory.get_ticket_data()
     if tickest:
         print(f'持仓中: {tickest}')
-        ticket = tickest[0]
-        for config in monitoring_configs:
-            inst_id = config['inst_id']
-            interval = config['interval']
-            limit = config['limit']
-            precision = config['precision']
-            entry_price = float(ticket.avg_px)
-            entry_type = 'buy' if ticket.pos_side == 'long' else 'sell'
-            await run_monitoring(inst_id, interval, limit, precision, entry_price, entry_type)
+        # ticket = tickest[0]
+        # for config in monitoring_configs:
+        #     inst_id = config['inst_id']
+        #     interval = config['interval']
+        #     limit = config['limit']
+        #     precision = config['precision']
+        #     entry_price = float(ticket.avg_px)
+        #     entry_type = 'buy' if ticket.pos_side == 'long' else 'sell'
+        #     await run_monitoring(inst_id, interval, limit, precision, entry_price, entry_type)
 
     else:
         tasks = []
