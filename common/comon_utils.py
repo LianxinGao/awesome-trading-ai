@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import subprocess
 from pathlib import Path
+
+from ai.models import SaveOrderInfo
 from common.store import ObjectStore
 import os
 
@@ -46,18 +48,18 @@ def play_system_sound(os_name):
 
 
 def save_ticket(inst_id: str, ticket_data: str):
-    date_time = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-    store.save(f"{inst_id}_{date_time}", ticket_data, "tickets")
+    # date_time = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    # store.save(f"{inst_id}_{date_time}", ticket_data, "tickets")
+    store.save(f"{inst_id}", ticket_data, "tickets")
 
 def save_analysis(inst_id: str, ticket_data: str):
     date_time = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     store.save(f"{inst_id}_{date_time}", ticket_data, "analysis")
 
-def load_latest_ticket(cls: Type[T])-> Optional[T]:
+def load_latest_ticket(inst_id, cls: Type[T])-> Optional[T]:
     try:
-        file_name = list(sorted(os.listdir(f"{data_path}/tickets")))[-1]
-        ticket = store.load_obj(file_name.split('.')[0], cls,"tickets")
-        return ticket
+        # file_name = list(sorted(os.listdir(f"{data_path}/tickets")))[-1]
+        return store.load_obj(inst_id, cls,"tickets")
     except Exception as e:
         print(e)
         return None
@@ -71,3 +73,7 @@ def load_latest_analysis(cls: Type[T])-> Optional[T]:
     except Exception as e:
         print(e)
         return None
+
+if __name__ == '__main__':
+    ticket = load_latest_ticket('BTC-USDT-SWAP', SaveOrderInfo)
+    print(ticket)

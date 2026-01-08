@@ -41,7 +41,15 @@ class AutoTradeResponse(BaseModel):
     early_close_strategy: str = Field(default="", description="提前平仓策略")
 
 class MonitoringResponse(BaseModel):
-    market_cycle_analysis: str = Field(description="对15分钟图整体背景的定义")
+    position_analysis: str = Field(description="持仓分析")
     current_risk_level: str = Field(description="当前风险等级及理由")
     action: Literal['HOLD', 'EXIT'] = Field(description="当前仓位操作")
-    reasoning: str = Field(description="基于Brooks理论具体的逻辑分析,先论述背景逻辑,再论述细节理由")
+    reasoning: str = Field(description="先论述背景逻辑，再论述细节理由")
+
+class SaveOrderInfo(BaseModel):
+    time: str = Field(description="下一根K线时间")
+    action: Literal["BUY", "SELL", "WAIT"] = Field(description="多空方向")
+    entry_price: str = Field(description="入场价格")
+    stop_loss_price: str = Field(description="止损价格")
+    take_profit_price: str = Field(description="止盈价格")
+    early_close_strategy: str = Field(description="持仓策略")
