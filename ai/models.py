@@ -31,16 +31,14 @@ class TrendResponse(BaseModel):
     confidence_score: int = Field(description="1-10分")
 
 class AutoTradeResponse(BaseModel):
-    market_stage: str = Field(description="明确判定当前属于 突破/通道/交易区间/其他")
-    key_levels: str = Field(description="给出 4H 关键位、15min 通道线或区间边界。")
-    signal_analysis: str = Field(description="分析 0-9 号线中的 Signal Bar 及其 Follow-through")
-    setup_identified: str = Field(description="识别出的 ABPA 模式 (例如: MTR, High 2, Wedge Bull Flag)")
-    reasoning: str = Field(description="解释阶段判断理由。**如果是通道阶段，需说明通道线的斜率及回撤深度。**")
+    market_stage: str = Field(description="Breakout / Channel / Trading Range")
+    setup_identified: str = Field(description="是否有识别出的价格行为模式")
+    reasoning: str = Field(description="理由总结")
     action: Literal['BUY', 'SELL', 'WAIT'] = Field(description="多空方向")
     entry_price: str = Field(default="", description="入场价")
     stop_loss: str = Field(default="", description="止损价")
     take_profit: str = Field(default="", description="止盈价")
-    target_price: str = Field(default="", description="理论目标（MM、通道边缘或区间边缘）。")
+    early_close_strategy: str = Field(default="", description="提前平仓策略")
 
 class MonitoringResponse(BaseModel):
     market_cycle_analysis: str = Field(description="对15分钟图整体背景的定义")

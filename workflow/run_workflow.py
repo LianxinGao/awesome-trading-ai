@@ -54,8 +54,8 @@ async def run_inst(inst_id: str, intervals: list[int], limit: int, precision: in
     # markers = [
     #     # {'timestamp': '2025-12-26 15:45:00', 'text': 'latest kline'},
     # ]
-    image_bytes_15min = draw_klines(klines_15min, f"{inst_id} 15-min Candlestick Chart")
-    image_bytes_4h = draw_klines(klines_4h, f"{inst_id} 4h Candlestick Chart")
+    image_bytes_15min = draw_klines(klines_15min, f"15-min Candlestick Chart")
+    image_bytes_4h = draw_klines(klines_4h, f"4-hour Candlestick Chart")
 
 
     auto_prompt = auto_trade_prompts.format(latest_klines_15min=last_10_str_15min,
@@ -100,6 +100,7 @@ async def run_monitoring(inst_id, interval, limit: int, precision: int, entry_pr
 
 async def run_workflow():
     tickest = ticket_factory.get_ticket_data()
+    tickest = []
     if tickest:
         print(f'持仓中: {tickest}')
         # ticket = tickest[0]

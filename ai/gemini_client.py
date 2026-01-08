@@ -14,7 +14,7 @@ async def request_ai(prompt: str, image_bytes_list: list[bytes], response_model:
     contents = image_datas + [prompt]
     client = genai.Client()
     response = client.models.generate_content(
-        model="gemini-3-pro-preview",
+        model="gemini-3-flash-preview",
         contents=contents,
         config={
             "response_mime_type": "application/json",
