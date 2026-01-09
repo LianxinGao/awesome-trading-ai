@@ -96,5 +96,7 @@ if __name__ == '__main__':
     # print(result)
     res = get_ticket_data()
     print(res)
+    eval_result = evaluate_trade("BTC-USDT-SWAP", "2026-01-03 13:35:00", end = str(datetime.now().replace(microsecond=0)))
+    print(eval_result)
     # res = order_position(inst_id, "buy", sz, 2.87, 2.86)
     # print(res)

@@ -49,6 +49,7 @@ class MonitoringResponse(BaseModel):
 class SaveOrderInfo(BaseModel):
     time: str = Field(description="下一根K线时间")
     action: Literal["BUY", "SELL", "WAIT"] = Field(description="多空方向")
+    reason: str = Field(description="理由")
     entry_price: str = Field(description="入场价格")
     stop_loss_price: str = Field(description="止损价格")
     take_profit_price: str = Field(description="止盈价格")

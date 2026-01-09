@@ -46,26 +46,26 @@ def draw_klines(klines_data, title, markers = None, entry_price = None, entry_ty
 async def run_inst(inst_id: str, intervals: list[int], limit: int, precision: int, sz: int):
     ticket_factory.cancel_algo_order(inst_id)
 
-    klines_15min = await get_kline_with_ema(inst_id, intervals[0], limit, precision)
-    klines_4h = await get_kline_with_ema(inst_id, intervals[1], limit, precision, False)
+    klines_5min = await get_kline_with_ema(inst_id, intervals[0], limit, precision)
+    klines_1h = await get_kline_with_ema(inst_id, intervals[1], limit, precision, False)
 
-    last_kline_time = klines_15min['timestamp'].iloc[-1]
+    last_kline_time = klines_5min['timestamp'].iloc[-1]
     last_kline_datetime = datetime.strptime(last_kline_time, '%Y-%m-%d %H:%M:%S')
-    next_kline_time = last_kline_datetime + timedelta(minutes=15)
+    next_kline_time = last_kline_datetime + timedelta(minutes=5)
     next_kline_time_str = next_kline_time.strftime("%Y-%m-%d %H:%M:%S")
 
-    last_10_str_15min = get_last_10_rows(klines_15min)
-    last_10_str_4h = get_last_10_rows(klines_4h)
+    last_10_str_5min = get_last_10_rows(klines_5min)
+    last_10_str_1h = get_last_10_rows(klines_1h)
 
     # markers = [
     #     # {'timestamp': '2025-12-26 15:45:00', 'text': 'latest kline'},
     # ]
-    image_bytes_15min = draw_klines(klines_15min, f"15-min Candlestick Chart")
-    image_bytes_4h = draw_klines(klines_4h, f"4-hour Candlestick Chart")
+    image_bytes_5min = draw_klines(klines_5min, f"5-min Candlestick Chart")
+    image_bytes_1h = draw_klines(klines_1h, f"1-hour Candlestick Chart")
 
 
-    auto_prompt = auto_trade_prompts.format(latest_klines_15min=last_10_str_15min, latest_klines_4h=last_10_str_4h)
-    auto_result = await request_ai(auto_prompt, [image_bytes_15min, image_bytes_4h], AutoTradeResponse)
+    auto_prompt = auto_trade_prompts.format(latest_klines_5min=last_10_str_5min, latest_klines_1h=last_10_str_1h)
+    auto_result = await request_ai(auto_prompt, [image_bytes_5min, image_bytes_1h], AutoTradeResponse)
     auto_response = json.dumps(auto_result, indent=2, ensure_ascii=False)
     print(auto_response)
     action = auto_result['action']
@@ -73,6 +73,7 @@ async def run_inst(inst_id: str, intervals: list[int], limit: int, precision: in
         save_info = SaveOrderInfo(
             time=next_kline_time_str,
             action=auto_result['action'],
+            reason=auto_result['reasoning'],
             entry_price=auto_result['entry_price'],
             take_profit_price=auto_result['take_profit'],
             stop_loss_price=auto_result['stop_loss'],
@@ -98,15 +99,15 @@ async def run_inst(inst_id: str, intervals: list[int], limit: int, precision: in
         await tg_tools.tg_bot_http_post(auto_response_to_tg)
 
 
-async def run_monitoring(inst_id, interval, limit: int, precision: int, entry_price, entry_type, early_close_strategy, time):
-    klines_15min = await get_kline_with_ema(inst_id, interval, limit, precision)
+async def run_monitoring(inst_id, interval, limit: int, precision: int, entry_price, entry_type, early_close_strategy, time,  tp, sl, reason):
+    klines_5min = await get_kline_with_ema(inst_id, interval, limit, precision)
 
     markers = [
         {'timestamp': time, 'text': 'Entry Bar'},
     ]
-    prompt = monitoring_prompts.format(strategy=early_close_strategy)
-    image_bytes_15min = draw_klines(klines_15min, f"15-min Candlestick Chart", markers=markers, entry_price=entry_price, entry_type=entry_type)
-    monitor_result = await request_ai(prompt, [image_bytes_15min], MonitoringResponse)
+    prompt = monitoring_prompts.format(strategy=early_close_strategy, sl=sl, tp=tp, reason=reason)
+    image_bytes_5min = draw_klines(klines_5min, f"5-min Candlestick Chart", markers=markers, entry_price=entry_price, entry_type=entry_type)
+    monitor_result = await request_ai(prompt, [image_bytes_5min], MonitoringResponse)
     monitor_response = json.dumps(monitor_result, indent=2, ensure_ascii=False)
     print(monitor_response)
 
@@ -130,8 +131,11 @@ async def run_workflow():
             entry_price = float(ticket.entry_price)
             entry_type = ticket.action
             early_close_strategy = ticket.early_close_strategy
+            tp = ticket.take_profit_price
+            sl = ticket.stop_loss_price
+            reason = ticket.reasoning
             time = ticket.time
-            await run_monitoring(inst_id, interval, limit, precision, entry_price, entry_type, early_close_strategy, time)
+            await run_monitoring(inst_id, interval, limit, precision, entry_price, entry_type, early_close_strategy, time, tp, sl, reason)
 
     else:
         tasks = []
