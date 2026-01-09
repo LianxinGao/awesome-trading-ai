@@ -66,7 +66,7 @@ auto_trade_prompts = dedent("""\
 # 注意事项
 - 除了专业术语（如 High 2, Measured Move）外，其余解释请使用中文。
 - 如果胜率低于 40% 或盈亏比不合理，必须选择 WAIT。
-- action为WAIT时，5~7为空字符串
+- action为WAIT时，5~8为空字符串
 - 若错过了较好的入场点，必须等待，短线交易，不缺机会。
 """)
 

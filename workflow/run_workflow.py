@@ -133,7 +133,7 @@ async def run_workflow():
             early_close_strategy = ticket.early_close_strategy
             tp = ticket.take_profit_price
             sl = ticket.stop_loss_price
-            reason = ticket.reasoning
+            reason = ticket.reason
             time = ticket.time
             await run_monitoring(inst_id, interval, limit, precision, entry_price, entry_type, early_close_strategy, time, tp, sl, reason)
 
