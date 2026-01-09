@@ -8,7 +8,7 @@ from client.ok_models import TdMode
 class TradingScheduler:
     """交易调度器，负责定时执行交易决策"""
     
-    def __init__(self, agent_func: Callable):
+    def __init__(self, agent_func: Callable, time_interval: int = 15):
         """
         初始化调度器
         
@@ -17,6 +17,7 @@ class TradingScheduler:
         """
         self.agent_func = agent_func
         self.running = False
+        self.time_interval = time_interval
 
         # result = ok_client.set_leverage(config.TRADING_INST_ID, config.LEVERAGE, TdMode.CROSS)
         # print(f"设置合约杠杆为{config.LEVERAGE}倍: {result}")
@@ -25,19 +26,19 @@ class TradingScheduler:
     def get_next_run_time(self) -> datetime:
         now = datetime.now()
         
-        # 计算当前15分钟周期的开始时间
+        # 计算当前x分钟周期的开始时间
         current_cycle_start = now.replace(
-            minute=(now.minute // 15) * 15,
+            minute=(now.minute // self.time_interval) * self.time_interval,
             second=0,
             microsecond=0
         )
         
-        # 下次运行时间 = 当前周期开始时间 + 15分
-        next_run = current_cycle_start + timedelta(minutes=15, seconds=5)
+        # 下次运行时间 = 当前周期开始时间 + x分
+        next_run = current_cycle_start + timedelta(minutes=self.time_interval, seconds=5)
         
-        # 如果已经过了这个时间，则计算下一个15分钟周期
+        # 如果已经过了这个时间，则计算下一个x分钟周期
         if next_run <= now:
-            next_run += timedelta(minutes=15)
+            next_run += timedelta(minutes=self.time_interval)
         
         return next_run
     
