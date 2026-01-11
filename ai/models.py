@@ -31,10 +31,10 @@ class TrendResponse(BaseModel):
     confidence_score: int = Field(description="1-10分")
 
 class AutoTradeResponse(BaseModel):
-    market_stage: str = Field(description="Breakout / Channel / Trading Range")
     setup_identified: str = Field(description="是否有识别出的价格行为模式")
     reasoning: str = Field(description="理由总结")
     action: Literal['BUY', 'SELL', 'WAIT'] = Field(description="多空方向")
+    entry_type: str = Field(description="计划委托/市价委托")
     entry_price: str = Field(default="", description="入场价")
     stop_loss: str = Field(default="", description="止损价")
     take_profit: str = Field(default="", description="止盈价")

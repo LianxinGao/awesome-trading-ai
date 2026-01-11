@@ -397,7 +397,8 @@ async def get_klines_start_from_specify_time(inst_id: str, start_date: str, inte
 
 
 
-async def get_klines(inst_id: str, interval_minutes=60, n=200, exclude_unconfirmed_bar=False,
+async def get_klines(inst_id: str, interval_minutes=60, n=200,
+                     exclude_unconfirmed_bar=False,
                      end_timestamp: str = None) -> pd.DataFrame:
     if end_timestamp:
         now = end_timestamp

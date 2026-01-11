@@ -114,7 +114,8 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
         all_prices = np.concatenate([all_prices, data['ema21'].dropna().values])
     price_range = max(all_prices) - min(all_prices)
     top_buffer = price_range * 0.04  # 价格范围的4%作为顶部缓冲，为标记预留更多空间
-    bottom_buffer = price_range * 0.04  # 价格范围的4%作为底部缓冲，为标记预留更多空间
+    # 增加底部缓冲区域，为0-80的数字标记预留更多空间
+    bottom_buffer = price_range * 0.06  # 价格范围的6%作为底部缓冲，为更多标记预留空间
     
     # 计算每个蜡烛图的宽度，基于数据点的平均时间间隔
     if len(data) > 1:
@@ -246,14 +247,29 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
     # 设置y轴范围，增加一些空间让图表更美观，为标记预留空间
     ax.set_ylim(min(all_prices) - bottom_buffer, max(all_prices) + top_buffer)
     
-    # 为最后10根K线添加数字标记（0-9），统一排列在图表最下方
-    num_last_klines = min(10, len(data))
+    # 为最后81根K线添加数字标记，只在关键位置标记
+    num_last_klines = min(81, len(data))
     last_klines_data = data.tail(num_last_klines)
+    
+    # 定义需要标记的关键位置：0-9全部显示，20、40、80也标记
+    key_positions = set(range(10)) | {20, 40, 80}
+    
+    # 字体大小
+    font_size = 9
+    
+    # 计算标记的y位置，为标记预留空间
+    mark_y_position = min(all_prices) - bottom_buffer * 0.6
+    
     for idx, (i, row) in enumerate(last_klines_data.iterrows()):
         timestamp = mdates.date2num(row['timestamp'])
-        # 将数字标记统一排列在图表底部
-        ax.text(timestamp, min(all_prices) - bottom_buffer * 0.7, str(idx), 
-                fontsize=10, color='purple', fontweight='bold', ha='center', va='top', zorder=5)
+        # 按时间顺序，最旧的K线标记为80，最新的标记为0（从80递减到0）
+        mark_num = num_last_klines - 1 - idx
+        
+        # 只在关键位置标记
+        if mark_num in key_positions:
+            ax.text(timestamp, mark_y_position, str(mark_num), 
+                    fontsize=font_size, color='purple', fontweight='bold', 
+                    ha='center', va='top', zorder=5)
     
     # 添加网格
     ax.grid(True, linestyle='--', alpha=0.3)
