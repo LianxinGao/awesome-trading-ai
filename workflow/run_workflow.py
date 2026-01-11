@@ -187,3 +187,7 @@ async def run_workflow():
             tasks.append(task)
 
         await asyncio.gather(*tasks)
+
+if __name__ == '__main__':
+    import asyncio
+    asyncio.run(run_workflow())

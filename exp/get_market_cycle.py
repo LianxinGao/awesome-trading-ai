@@ -87,6 +87,6 @@ def convert_ohlc_to_numeric(df):
 # df_5m = convert_ohlc_to_numeric(df_5m)
 # df_1h = convert_ohlc_to_numeric(df_1h)
 #
-# classifier = UltimateMarketClassifier(window=40, z_threshold=2.0)
-# state = classifier.get_market_state(df_5m, df_1h)
+# classifier = UltimateMarketClassifier(window=20, z_threshold=2.0)
+# state = classifier.get_single_mode(df_5m)
 # print(state)
