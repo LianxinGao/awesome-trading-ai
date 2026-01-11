@@ -257,6 +257,97 @@ def get_now():
     formatted_date = date_object.strftime('%Y-%m-%d %H:%M:%S')
     return formatted_date
 
+
+async def get_klines_end_with_specify_time(inst_id: str, end_date: str, interval_minutes=60, n=200, exclude_unconfirmed_bar=False) -> pd.DataFrame:
+    """
+    获取指定结束时间之前的n个K线数据（回撤获取）
+    
+    Args:
+        inst_id: 交易对ID
+        end_date: 结束日期，格式为 'YYYY-MM-DD HH:MM:SS'
+        interval_minutes: K线周期（分钟）
+        n: 需要获取的K线数量
+        exclude_unconfirmed_bar: 是否排除未确认的K线
+    
+    Returns:
+        DataFrame: 包含K线数据的DataFrame
+    """
+    end_timestamp = comon_utils.get_timestamp(end_date)
+
+    all_klines = []
+    current_after = end_timestamp  # 用于分页的时间戳，初始为结束时间
+
+    while True:
+        # 如果exclude_unconfirmed_bar=True，可能需要获取更多数据以确保有足够的确认K线
+        batch_size = 200
+        res = marketAPI.get_candlesticks(
+            instId=inst_id,
+            after=current_after,  # after参数：获取此时间戳之前（更旧）的数据
+            bar=get_bar_size(interval_minutes),
+            limit=batch_size
+        )['data']
+
+        if not res:
+            break
+
+        # 在处理数据之前，先保存最后一条数据的原始时间戳（用于分页）
+        # API返回的数据是按时间倒序的（最新的在前），最后一条是最早的
+        last_timestamp = int(res[-1][0])
+
+        # 处理当前批次的数据
+        batch_klines = []
+        for line in res:
+            line[0] = str(datetime.fromtimestamp(int(line[0]) / 1000).strftime('%Y-%m-%d %H:%M:%S'))
+            batch_klines.append([line[0], line[1], line[2], line[3], line[4], line[5], line[8]])
+
+        # 添加到总数据中
+        all_klines.extend(batch_klines)
+
+        # 更新分页参数：将after设置为最后一条数据的时间戳，以便下次获取更早的数据
+        current_after = last_timestamp
+
+        # 检查是否已经获取到足够的数据（需要先处理数据再检查）
+        df_temp = pd.DataFrame(all_klines,
+                               columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'confirm'])
+        df_temp = df_temp.drop_duplicates(subset=['timestamp']).sort_values('timestamp').reset_index(drop=True)
+        
+        # 如果需要排除未确认的K线，检查确认的K线数量
+        if exclude_unconfirmed_bar:
+            df_confirmed = df_temp[df_temp['confirm'] != '0']
+            confirmed_count = len(df_confirmed)
+            if confirmed_count >= n:
+                break
+        else:
+            total_count = len(df_temp)
+            if total_count >= n:
+                break
+
+        # 如果返回的数据少于请求的数量，说明已经没有更多数据了
+        # 但此时可能还没有足够的确认K线，所以继续检查，让后续逻辑处理
+        if len(res) < batch_size:
+            # 如果已经没有更多数据，但确认K线还不够，会在最后抛出异常
+            break
+
+    # 去重并按时间排序
+    df = pd.DataFrame(all_klines,
+                      columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'confirm'])
+    df = df.drop_duplicates(subset=['timestamp']).sort_values('timestamp').reset_index(drop=True)
+
+    # 如果需要排除未确认的K线
+    if exclude_unconfirmed_bar:
+        df = df[df['confirm'] != '0']
+
+    # 确保返回正好n条数据（取最后n条，因为数据是按时间正序排列的，最后n条是最接近结束时间的）
+    if len(df) < n:
+        raise ValueError(f"历史数据不足: 请求{n}条K线，但只获取到{len(df)}条")
+    
+    # 返回正好n条数据
+    df = df.tail(n).reset_index(drop=True)
+
+    df.drop(columns=['confirm'], inplace=True)
+    return df
+
+
 async def get_klines_start_from_specify_time(inst_id: str, start_date: str, interval_minutes=60, n=200, exclude_last_bar=False) -> pd.DataFrame:
     now = comon_utils.get_timestamp(str(datetime.now().replace(microsecond=0)))
     start_timestamp = comon_utils.get_timestamp(start_date)
@@ -452,6 +543,8 @@ async def get_account_balance():
 if __name__ == '__main__':
     import asyncio
 
+    result = asyncio.run(get_klines_end_with_specify_time("BTC-USDT-SWAP", "2026-01-09 22:35:01", 5, 200,True))
+    print(result.tail())
     # res = get_position_history("SOL-USDT-SWAP", "", "")
     # print(res[:3])
     # res = asyncio.run(get_top_trader_account_ratio("DOGE-USDT-SWAP", "15m"))
@@ -466,13 +559,13 @@ if __name__ == '__main__':
     # modify_algo_order("ETH-USDT-SWAP", "3070396836683882496", "3005.49", "2903.01")
     # result = tradeAPI.order_algos_list(ordType="conditional")
     # print(result)
-    import asyncio
-    now = datetime.now()
-    result = now.replace(
-        minute=(now.minute // 15) * 15,
-        second=0,
-        microsecond=0
-    )
-    result = result - timedelta(minutes=1)
-    result = asyncio.run(get_klines_start_from_specify_time("ETH-USDT-SWAP", str(result)))
-    print(result.tail(100))
+    # import asyncio
+    # now = datetime.now()
+    # result = now.replace(
+    #     minute=(now.minute // 15) * 15,
+    #     second=0,
+    #     microsecond=0
+    # )
+    # result = result - timedelta(minutes=1)
+    # result = asyncio.run(get_klines_start_from_specify_time("ETH-USDT-SWAP", str(result)))
+    # print(result.tail(100))

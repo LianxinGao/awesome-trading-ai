@@ -52,6 +52,11 @@ def save_ticket(inst_id: str, ticket_data: str):
     # store.save(f"{inst_id}_{date_time}", ticket_data, "tickets")
     store.save(f"{inst_id}", ticket_data, "tickets")
 
+def save_confirmed_ticket(inst_id: str, ticket_data: str):
+    date_time = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    store.save(f"{inst_id}_{date_time}", ticket_data, "confirmed_tickets")
+
+
 def save_analysis(inst_id: str, ticket_data: str):
     date_time = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     store.save(f"{inst_id}_{date_time}", ticket_data, "analysis")

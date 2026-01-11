@@ -14,6 +14,16 @@ async def get_kline_with_ema(inst_id, interval, limit, precision, exclude_unconf
     return klines
 
 
+def get_kline_with_ema_analysis(klines, precision):
+    name = f'ema21'
+    klines['close'] = klines['close'].astype(float)
+    ema21 = talib.EMA(klines["close"], timeperiod=21)
+    ema21 = ema21.round(precision)
+    klines[name] = ema21
+    klines.dropna(subset=[name], inplace=True)
+    return klines
+
+
 if __name__ == '__main__':
     import asyncio
 

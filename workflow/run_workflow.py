@@ -125,6 +125,7 @@ async def run_workflow():
         for config in monitoring_configs:
             inst_id = config['inst_id']
             ticket = comon_utils.load_latest_ticket(inst_id, SaveOrderInfo)
+            comon_utils.save_confirmed_ticket(inst_id, ticket.model_dump_json(indent=4))
             interval = config['interval']
             limit = config['limit']
             precision = config['precision']

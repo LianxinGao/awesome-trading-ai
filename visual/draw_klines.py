@@ -279,17 +279,17 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
 
 if __name__ == "__main__":
     # 获取数据
-    data = asyncio.run(get_kline_with_ema("BTC-USDT-SWAP", 15, 200, 2, False))
+    data = asyncio.run(get_kline_with_ema("BTC-USDT-SWAP", 5, 200, 2, False))
     print("Data shape:", data.shape)
     print(data.tail())
     
     # 示例标记数据
     markers = [
-        {'timestamp': '2026-1-08 10:45:00', 'text': 'entry place'},
+        # {'timestamp': '2026-1-08 10:45:00', 'text': 'entry place'},
     ]
     
     # 绘制K线图并保存 - 显示全部数据（最多200根）
-    fig, ax = plot_candlestick(data, title="15-min Candlestick Chart", markers=markers, entry_price=90980, entry_type='BUY')
+    fig, ax = plot_candlestick(data, title="5-min Candlestick Chart", markers=markers, entry_price=90980, entry_type='BUY')
     # plt.show()
     # 保存到根目录下的 data 文件夹
     root_dir = Path(__file__).parent.parent  # 获取项目根目录
