@@ -251,8 +251,8 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
     num_last_klines = min(81, len(data))
     last_klines_data = data.tail(num_last_klines)
     
-    # 定义需要标记的关键位置：0-9全部显示，20、40、80也标记
-    key_positions = set(range(10)) | {20, 40, 80}
+    # 定义需要标记的关键位置：0-9全部显示，20、40、60、80也标记
+    key_positions = set(range(10)) | {20, 40, 60, 80}
     
     # 字体大小
     font_size = 9
@@ -295,7 +295,9 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
 
 if __name__ == "__main__":
     # 获取数据
-    data = asyncio.run(get_kline_with_ema("BTC-USDT-SWAP", 5, 200, 2, False))
+    from client import ok_client
+    klines = asyncio.run(ok_client.get_klines("BTC-USDT-SWAP",  5, 200, False))
+    data = asyncio.run(get_kline_with_ema(klines, 2))
     print("Data shape:", data.shape)
     print(data.tail())
     
