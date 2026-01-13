@@ -62,39 +62,40 @@ def draw_plt_klines(klines_data, tail_name, title, markers=None, entry_price=Non
     return image_bytes
 
 
-classifier = UltimateMarketClassifier()
+if __name__ == '__main__':
+    classifier = UltimateMarketClassifier()
 
-end_date = "2026-01-12 20:45:01"
-klines_5min = asyncio.run(ok_client.get_klines_end_with_specify_time("BTC-USDT-SWAP", end_date, 5, 300, True))
+    end_date = "2026-01-12 20:45:01"
+    klines_5min = asyncio.run(ok_client.get_klines_end_with_specify_time("BTC-USDT-SWAP", end_date, 5, 300, True))
 
-state20 = classifier.get_single_mode(klines_5min, window=20, z_threshold=1.5)
-state40 = classifier.get_single_mode(klines_5min, window=40, z_threshold=1.5)
-state60 = classifier.get_single_mode(klines_5min, window=60, z_threshold=1.5)
-state80 = classifier.get_single_mode(klines_5min, window=80, z_threshold=1.5)
-print(state20)
-print(state40)
-print(state60)
-print(state80)
+    state20 = classifier.get_single_mode(klines_5min, window=20, z_threshold=1.5)
+    state40 = classifier.get_single_mode(klines_5min, window=40, z_threshold=1.5)
+    state60 = classifier.get_single_mode(klines_5min, window=60, z_threshold=1.5)
+    state80 = classifier.get_single_mode(klines_5min, window=80, z_threshold=1.5)
+    print(state20)
+    print(state40)
+    print(state60)
+    print(state80)
 
-klines_5min = prepare_draw_data.get_kline_with_ema_analysis(klines_5min, 2)
+    klines_5min = prepare_draw_data.get_kline_with_ema_analysis(klines_5min, 2)
 
-klines_1h = asyncio.run(ok_client.get_klines_end_with_specify_time("BTC-USDT-SWAP", end_date, 60, 300, False))
-klines_1h = prepare_draw_data.get_kline_with_ema_analysis(klines_1h, 2)
+    klines_1h = asyncio.run(ok_client.get_klines_end_with_specify_time("BTC-USDT-SWAP", end_date, 60, 300, False))
+    klines_1h = prepare_draw_data.get_kline_with_ema_analysis(klines_1h, 2)
 
-image_bytes_5min = draw_plt_klines(klines_5min, '5min', f"5-min Candlestick Chart")
-image_bytes_1h = draw_plt_klines(klines_1h, '1h', f"1-hour Candlestick Chart")
+    image_bytes_5min = draw_plt_klines(klines_5min, '5min', f"5-min Candlestick Chart")
+    image_bytes_1h = draw_plt_klines(klines_1h, '1h', f"1-hour Candlestick Chart")
 
-last_10_str_5min = get_last_10_rows(klines_5min)
-# last_10_str_1h = get_last_10_rows(klines_1h)
+    last_10_str_5min = get_last_10_rows(klines_5min)
+    # last_10_str_1h = get_last_10_rows(klines_1h)
 
-print("request ai")
-auto_prompt = analysis_trade_prompts.format(latest_klines_5min=last_10_str_5min,
-                                            latest_20_market_cycle=state20,
-                                            latest_40_market_cycle=state40,
-                                            latest_60_market_cycle=state60,
-                                            latest_80_market_cycle=state80,
-                                            )
-auto_result = asyncio.run(request_ai_direct(auto_prompt, [image_bytes_5min, image_bytes_1h]))
-print(auto_result)
-# auto_response = json.dumps(auto_result, indent=2, ensure_ascii=False)
-# print(auto_response)
+    print("request ai")
+    auto_prompt = analysis_trade_prompts.format(latest_klines_5min=last_10_str_5min,
+                                                latest_20_market_cycle=state20,
+                                                latest_40_market_cycle=state40,
+                                                latest_60_market_cycle=state60,
+                                                latest_80_market_cycle=state80,
+                                                )
+    auto_result = asyncio.run(request_ai_direct(auto_prompt, [image_bytes_5min, image_bytes_1h]))
+    print(auto_result)
+    # auto_response = json.dumps(auto_result, indent=2, ensure_ascii=False)
+    # print(auto_response)

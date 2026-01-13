@@ -1,7 +1,7 @@
 import asyncio
 from ai.gemini_client import request_ai
-from ai.models import AutoTradeResponse, MonitoringResponse, SaveOrderInfo
-from ai.auto_prompts import auto_trade_prompts, monitoring_prompts
+from ai.models import AutoTradeResponse, MonitoringResponse, SaveOrderInfo, AutoTradeResponseV2
+from ai.auto_prompts_v2 import auto_trade_system_prompts, auto_trade_user_prompts, monitoring_user_prompts, monitoring_system_prompts
 from client.ok_models import TdMode
 from visual.draw_klines import plot_candlestick
 from visual.prepare_draw_data import get_kline_with_ema
@@ -14,10 +14,9 @@ from client import ok_client
 from factory import ticket_factory
 from datetime import datetime, timedelta
 from exp.get_market_cycle import UltimateMarketClassifier
+from pathlib import Path
 
-classifier20 = UltimateMarketClassifier(window=20)
-classifier40 = UltimateMarketClassifier(window=40)
-classifier80 = UltimateMarketClassifier(window=80)
+classifier = UltimateMarketClassifier()
 
 
 def get_last_10_rows(df):
@@ -41,8 +40,14 @@ def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=N
         markers = []
     fig, ax = plot_candlestick(klines_data, title=title, markers=markers, entry_price=entry_price,
                                entry_type=entry_type)
+
     img_buffer = io.BytesIO()
     plt.savefig(img_buffer, format='png', dpi=200, bbox_inches='tight')
+
+    root_dir = Path(__file__).parent.parent  # 获取项目根目录
+    output_path = root_dir / "data" / f"kline_chart_pro_{title}.png"
+    plt.savefig(output_path, dpi=200, bbox_inches='tight')
+
     plt.close(fig)
 
     # 获取图像字节数据
@@ -54,16 +59,16 @@ def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=N
 async def run_inst(inst_id: str, intervals: list[int], limit: int, precision: int, sz: int):
     ticket_factory.cancel_algo_order(inst_id)
 
-    klines_5min = await ok_client.get_klines(inst_id, intervals[0], limit, exclude_unconfirmed_bar=False)
-    klines_1h = await ok_client.get_klines(inst_id, intervals[1], limit, exclude_unconfirmed_bar=True)
+    klines_5min = await ok_client.get_klines(inst_id, intervals[0], limit, exclude_unconfirmed_bar=True)
+    klines_1h = await ok_client.get_klines(inst_id, intervals[1], limit, exclude_unconfirmed_bar=False)
 
-    mode520 = classifier20.get_single_mode(klines_5min.copy())
-    mode540 = classifier40.get_single_mode(klines_5min.copy())
-    mode580 = classifier80.get_single_mode(klines_5min.copy())
+    mode520 = classifier.get_single_mode(klines_5min.copy(), window=20)
+    mode540 = classifier.get_single_mode(klines_5min.copy(), window=40)
+    mode580 = classifier.get_single_mode(klines_5min.copy(), window=80)
 
-    mode120 = classifier20.get_single_mode(klines_1h.copy())
-    mode140 = classifier40.get_single_mode(klines_1h.copy())
-    mode180 = classifier80.get_single_mode(klines_1h.copy())
+    mode120 = classifier.get_single_mode(klines_1h.copy(), window=20)
+    mode140 = classifier.get_single_mode(klines_1h.copy(), window=40)
+    mode180 = classifier.get_single_mode(klines_1h.copy(), window=80)
 
     klines_5min = await get_kline_with_ema(klines_5min.copy(), precision)
     klines_1h = await get_kline_with_ema(klines_1h.copy(), precision)
@@ -129,17 +134,96 @@ async def run_inst(inst_id: str, intervals: list[int], limit: int, precision: in
         # await tg_tools.tg_bot_http_post(auto_response_to_tg)
 
 
+async def run_inst_v2(inst_id: str, intervals: list[int], limit: int, precision: int, sz: int):
+    ticket_factory.cancel_algo_order(inst_id)
+
+    klines_5min = await ok_client.get_klines(inst_id, intervals[0], limit, exclude_unconfirmed_bar=True)
+    klines_1h = await ok_client.get_klines(inst_id, intervals[1], limit, exclude_unconfirmed_bar=False)
+
+    mode520 = classifier.get_single_mode(klines_5min.copy(), window=20)
+    mode540 = classifier.get_single_mode(klines_5min.copy(), window=40)
+    mode560 = classifier.get_single_mode(klines_5min.copy(), window=60)
+    mode580 = classifier.get_single_mode(klines_5min.copy(), window=80)
+    print(f'20周期: {mode520}')
+    print(f'40周期: {mode540}')
+    print(f'60周期: {mode560}')
+    print(f'80周期: {mode580}')
+    # mode120 = classifier.get_single_mode(klines_1h.copy(), window=20)
+    # mode140 = classifier.get_single_mode(klines_1h.copy(), window=40)
+    # mode160 = classifier.get_single_mode(klines_1h.copy(), window=60)
+    # mode180 = classifier.get_single_mode(klines_1h.copy(), window=80)
+
+    klines_5min = await get_kline_with_ema(klines_5min.copy(), precision)
+    klines_1h = await get_kline_with_ema(klines_1h.copy(), precision)
+
+    last_kline_time = klines_5min['timestamp'].iloc[-1]
+    last_kline_datetime = datetime.strptime(last_kline_time, '%Y-%m-%d %H:%M:%S')
+    next_kline_time = last_kline_datetime + timedelta(minutes=5)
+    next_kline_time_str = next_kline_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    last_10_str_5min = get_last_10_rows(klines_5min)
+
+    # markers = [
+    #     # {'timestamp': '2025-12-26 15:45:00', 'text': 'latest kline'},
+    # ]
+    image_bytes_5min = draw_klines(klines_5min, f"5min_Candlestick_Chart")
+    image_bytes_1h = draw_klines(klines_1h, f"1hour_Candlestick_Chart")
+
+    auto_user_prompt = auto_trade_user_prompts.format(latest_klines_5min=last_10_str_5min,
+                                            latest_20_market_cycle=mode520,
+                                            latest_40_market_cycle=mode540,
+                                            latest_60_market_cycle=mode560,
+                                            latest_80_market_cycle=mode580,
+                                            )
+    auto_result = await request_ai(auto_trade_system_prompts, auto_user_prompt, [image_bytes_5min, image_bytes_1h], AutoTradeResponseV2)
+    auto_response = json.dumps(auto_result, indent=2, ensure_ascii=False)
+    print(auto_response)
+    action = auto_result['action']
+    if action != 'WAIT':
+        entry_type = auto_result['entry_type']
+        save_info = SaveOrderInfo(
+            time=next_kline_time_str,
+            action=auto_result['action'],
+            reason=auto_result['summary'],
+            entry_price=auto_result['entry_price'],
+            take_profit_price=auto_result['take_profit'],
+            stop_loss_price=auto_result['stop_loss'],
+            early_close_strategy=auto_result['early_close_strategy']
+        )
+        comon_utils.save_ticket(inst_id, save_info.model_dump_json(indent=4))
+
+        if action == 'BUY':
+            side = 'buy'
+        else:
+            side = 'sell'
+        if entry_type == '市价委托':
+            ticket_factory.order_position(inst_id, side, sz, auto_result['take_profit'], auto_result['stop_loss'])
+        else:
+            ticket_factory.order_algo_order(inst_id, side, sz,
+                                            auto_result['entry_price'],
+                                            auto_result['take_profit'],
+                                            auto_result['stop_loss'])
+        end = str(datetime.now().replace(microsecond=0))
+        eval_result = ticket_factory.evaluate_trade(inst_id, evaluate_configs['begin'], end)
+        auto_response_to_tg = json.dumps({
+            'symbol': inst_id,
+            'ai_analysis': auto_result,
+            'trading_history': eval_result
+        }, indent=2, ensure_ascii=False)
+        # await tg_tools.tg_bot_http_post(auto_response_to_tg)
+
+
 async def run_monitoring(inst_id, interval, limit: int, precision: int, entry_price, entry_type, early_close_strategy,
                          time, tp, sl, reason):
-    klines_5min = await get_kline_with_ema(inst_id, interval, limit, precision)
+    klines_5min = await ok_client.get_klines(inst_id, interval, limit, exclude_unconfirmed_bar=True)
 
     markers = [
         {'timestamp': time, 'text': 'Entry Bar'},
     ]
-    prompt = monitoring_prompts.format(strategy=early_close_strategy, sl=sl, tp=tp, reason=reason)
-    image_bytes_5min = draw_klines(klines_5min, f"5-min Candlestick Chart", markers=markers, entry_price=entry_price,
+    prompt = monitoring_user_prompts.format(strategy=early_close_strategy, sl=sl, tp=tp, reason=reason)
+    image_bytes_5min = draw_klines(klines_5min, f"monitoring_5min_Candlestick_Chart", markers=markers, entry_price=entry_price,
                                    entry_type=entry_type)
-    monitor_result = await request_ai(prompt, [image_bytes_5min], MonitoringResponse)
+    monitor_result = await request_ai(monitoring_system_prompts, prompt, [image_bytes_5min], MonitoringResponse)
     monitor_response = json.dumps(monitor_result, indent=2, ensure_ascii=False)
     print(monitor_response)
 
@@ -155,12 +239,13 @@ async def run_workflow():
         print(f'持仓中: {tickest}')
         for config in monitoring_configs:
             inst_id = config['inst_id']
+            ok_ticket = [ticket for ticket in tickest if ticket.inst_id == inst_id]
             ticket = comon_utils.load_latest_ticket(inst_id, SaveOrderInfo)
             comon_utils.save_confirmed_ticket(inst_id, ticket.model_dump_json(indent=4))
             interval = config['interval']
             limit = config['limit']
             precision = config['precision']
-            entry_price = float(ticket.entry_price)
+            entry_price = float(ticket.entry_price) if ticket.entry_price else float(ok_ticket[0].avg_px)
             entry_type = ticket.action
             early_close_strategy = ticket.early_close_strategy
             tp = ticket.take_profit_price
@@ -183,7 +268,7 @@ async def run_workflow():
             ok_client.set_leverage(inst_id, leverage, TdMode.CROSS)
             print(f"设置{inst_id}的合约杠杆为{leverage}倍")
 
-            task = run_inst(inst_id, intervals, limit, precision, sz)
+            task = run_inst_v2(inst_id, intervals, limit, precision, sz)
             tasks.append(task)
 
         await asyncio.gather(*tasks)

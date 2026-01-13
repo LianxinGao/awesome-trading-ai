@@ -84,7 +84,7 @@ def find_local_extrema(data, window_size=11):
     return local_maxima, local_minima
 
 
-def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=None, entry_price=None, entry_type=None):
+def plot_candlestick(data, title="Candlestick Chart", figsize=(35, 18), markers=None, entry_price=None, entry_type=None):
     """
     绘制K线图（蜡烛图）
     
@@ -203,6 +203,31 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(28, 14), markers=
                        ha='center',
                        zorder=4)
     
+    # 标记最新K线位置（指向左边的箭头）
+    if len(data) > 0:
+        latest_row = data.iloc[-1]
+        latest_timestamp = mdates.date2num(latest_row['timestamp'])
+        # 使用K线body的中间位置（开盘价和收盘价的平均值）
+        latest_price = (latest_row['open'] + latest_row['close']) / 2
+        
+        # 计算时间间隔，用于确定文本位置（在K线右侧）
+        if len(data) > 1:
+            time_diff = mdates.date2num(data.iloc[-1]['timestamp']) - mdates.date2num(data.iloc[-2]['timestamp'])
+        else:
+            time_diff = 0.001
+        
+        # 在K线右侧绘制箭头指向K线body中间位置
+        ax.annotate('latest_bar', 
+                   xy=(latest_timestamp, latest_price),  # 箭头指向的点（K线body中间位置）
+                   xytext=(latest_timestamp + time_diff * 3, latest_price),  # 文本和箭头起始位置（K线右侧，增加距离）
+                   arrowprops=dict(arrowstyle='->', color='blue', lw=1.5),  # 箭头从右侧指向K线
+                   fontsize=12, 
+                   color='blue',
+                   fontweight='bold',
+                   ha='left',
+                   va='center',
+                   zorder=4)
+    
     # 添加成本价水平虚线
     if entry_price is not None:
         # 根据交易类型设置标签文本
@@ -307,7 +332,7 @@ if __name__ == "__main__":
     ]
     
     # 绘制K线图并保存 - 显示全部数据（最多200根）
-    fig, ax = plot_candlestick(data, title="5-min Candlestick Chart", markers=markers, entry_price=90980, entry_type='BUY')
+    fig, ax = plot_candlestick(data, title="5-min Candlestick Chart", markers=markers)
     # plt.show()
     # 保存到根目录下的 data 文件夹
     root_dir = Path(__file__).parent.parent  # 获取项目根目录
