@@ -210,7 +210,7 @@ async def run_inst_v2(inst_id: str, intervals: list[int], limit: int, precision:
             'ai_analysis': auto_result,
             'trading_history': eval_result
         }, indent=2, ensure_ascii=False)
-        # await tg_tools.tg_bot_http_post(auto_response_to_tg)
+        await tg_tools.tg_bot_http_post(auto_response_to_tg)
 
 
 async def run_monitoring(inst_id, interval, limit: int, precision: int, entry_price, entry_type, early_close_strategy,
@@ -230,7 +230,7 @@ async def run_monitoring(inst_id, interval, limit: int, precision: int, entry_pr
     action = monitor_result['action']
     if action == 'EXIT':
         ticket_factory.close_position(inst_id)
-        # await tg_tools.tg_bot_http_post(monitor_response)
+        await tg_tools.tg_bot_http_post(monitor_response)
 
 
 async def run_workflow():
