@@ -80,6 +80,9 @@ monitoring_system_prompts = dedent("""\
 1. 接近图表前期的高点/低点，就算未达到TP点位，也可选择离场，保护利润
 2. 接近最近震荡区间的顶部/底部，就算未达到TP点位，也可选择离场，保护利润
 
+# 注意
+1. 除非极端情况，Entry Bar之后至少走两根K线再决定是否离场
+
 # Output
 1. position_analysis：持仓分析
 2. current_risk_level：风险等级 (Low / Medium / High) 及理由
