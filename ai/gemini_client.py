@@ -20,7 +20,7 @@ async def request_ai(system_prompt: str, user_prompt: str, image_bytes_list: lis
             system_instruction=system_prompt,
             response_mime_type="application/json",
             response_json_schema=response_model.model_json_schema(),
-            temperature=0.1,
+            temperature=0.7,
         )
     )
 
@@ -29,15 +29,17 @@ async def request_ai(system_prompt: str, user_prompt: str, image_bytes_list: lis
     result_dict = recipe.model_dump()
     return result_dict
 
-async def request_ai_direct(prompt: str, image_bytes_list: list[bytes]):
+async def request_ai_direct(system_prompt, prompt: str, image_bytes_list: list[bytes]):
     image_datas = [types.Part.from_bytes(data=image_bytes, mime_type='image/png') for image_bytes in image_bytes_list]
     contents = image_datas + [prompt]
     client = genai.Client()
     response = client.models.generate_content(
         model="gemini-3-flash-preview",
         contents=contents,
-        config={
-            "response_mime_type": "application/json",
-        }
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            response_mime_type="application/json",
+            temperature=0.7,
+        )
     )
     return response.text

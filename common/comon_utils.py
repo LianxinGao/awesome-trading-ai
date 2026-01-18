@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import subprocess
 from pathlib import Path
-
+import json
 from ai.models import SaveOrderInfo
 from common.store import ObjectStore
 import os
@@ -14,6 +14,22 @@ project_root = Path(__file__).parent.parent
 data_path = f"{project_root}/data"
 store = ObjectStore(data_path)
 
+
+def get_last_10_rows(df):
+    last_10_rows = df.tail(10).reset_index(drop=True)
+    last_10_rows = last_10_rows[::-1].reset_index(drop=True)
+    last_10_dict = {}
+    for i in range(min(10, len(last_10_rows))):
+        row = last_10_rows.iloc[i]
+        last_10_dict[i] = {
+            'open': row['open'],
+            'high': row['high'],
+            'low': row['low'],
+            'close': row['close'],
+            'ema21': row['ema21']
+        }
+    last_10_str = json.dumps(last_10_dict, ensure_ascii=False)
+    return last_10_str
 
 def move_time_backward(date_string, interval_minutes, N):
     # 将字符串转换为整数

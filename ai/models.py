@@ -41,16 +41,14 @@ class AutoTradeResponse(BaseModel):
     early_close_strategy: str = Field(default="", description="提前平仓策略")
 
 class AutoTradeResponseV2(BaseModel):
-    market_cycle_analysis: str = Field(description="是否有识别出的价格行为模式")
-    patterns_identified: str = Field(description="模式分析")
-    summary: str = Field(description="理由总结(在分析中不允许提及具体K线的编号)")
+    patterns_identified: str = Field(description="列出识别到的形态 ")
+    summary: str = Field(description="综合决策理由(在分析中不允许提及具体K线的编号)")
     action: Literal['BUY', 'SELL', 'WAIT'] = Field(description="多空方向")
-    entry_type: str = Field(description="计划委托/市价委托")
+    entry_type: str = Field(default="", description="计划委托/市价委托")
     entry_price: str = Field(default="", description="入场价")
     stop_loss: str = Field(default="", description="止损价")
     take_profit: str = Field(default="", description="止盈价")
-    early_close_strategy: str = Field(default="", description="提前完全平仓策略")
-
+    take_profit_logic: str = Field(default="", description="简述止盈位的计算逻辑")
 
 class MonitoringResponse(BaseModel):
     position_analysis: str = Field(description="持仓分析")
@@ -65,4 +63,3 @@ class SaveOrderInfo(BaseModel):
     entry_price: str = Field(description="入场价格")
     stop_loss_price: str = Field(description="止损价格")
     take_profit_price: str = Field(description="止盈价格")
-    early_close_strategy: str = Field(description="持仓策略")
