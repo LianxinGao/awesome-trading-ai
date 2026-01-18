@@ -146,7 +146,7 @@ async def run_inst_v2(inst_id: str, intervals: list[int], limit: int, precision:
         # await tg_tools.tg_bot_http_post(auto_response_to_tg)
 
 
-async def run_monitoring(inst_id, interval, limit: int, precision: int, entry_price, entry_type, early_close_strategy,
+async def run_monitoring(inst_id, interval, limit: int, precision: int, entry_price, entry_type,
                          time, tp, sl, reason):
     klines_15min = await ok_client.get_klines(inst_id, interval, limit, exclude_unconfirmed_bar=True)
 
@@ -181,12 +181,12 @@ async def run_workflow():
             precision = config['precision']
             entry_price = float(ticket.entry_price) if ticket.entry_price else float(ok_ticket[0].avg_px)
             entry_type = ticket.action
-            early_close_strategy = ticket.early_close_strategy
+            # early_close_strategy = ticket.early_close_strategy
             tp = ticket.take_profit_price
             sl = ticket.stop_loss_price
             reason = ticket.reason
             time = ticket.time
-            await run_monitoring(inst_id, interval, limit, precision, entry_price, entry_type, early_close_strategy,
+            await run_monitoring(inst_id, interval, limit, precision, entry_price, entry_type,
                                  time, tp, sl, reason)
 
     else:
