@@ -128,6 +128,18 @@ class UltimateMarketClassifier:
         # 趋势方向，用斜率符号区分牛/熊
         trend_dir = "Bull" if slope >= 0 else "Bear"
         
+        # --- [1.5. 计算震荡区间边界（用于Breakout判定）] ---
+        # 使用window大小的历史数据计算上沿和下沿
+        boundary_subset = df.iloc[-actual_window:].copy()
+        range_high = boundary_subset['high'].max()  # 震荡区间上沿
+        range_low = boundary_subset['low'].min()    # 震荡区间下沿
+        current_close = df['close'].iloc[-1]        # 当前收盘价
+        
+        # 判断是否突破边界
+        breakout_up = current_close > range_high    # 向上突破
+        breakout_down = current_close < range_low  # 向下突破
+        is_breakout_boundary = breakout_up or breakout_down
+        
         # --- [2. 动态 Z-Score 波动判定（自适应窗口）] ---
         # 计算相对实体比例: (Close-Open)/Open
         body_rel = (df['close'] - df['open']).abs() / (df['open'] + 1e-9)
@@ -207,8 +219,24 @@ class UltimateMarketClassifier:
         
         # --- [5. 模式判定逻辑（优先顺序） ---
         # A. BREAKOUT: 爆发性波动
+        # 需要同时满足：1) 评分达标 2) 突破边界确认
+        # 如果R²较低（震荡区间），必须突破边界；如果R²较高（已有趋势），可以放宽边界要求
+        r2_threshold_for_strict_breakout = 0.3  # R²低于此值认为是震荡区间，需要严格突破
+        
         if breakout_score >= breakout_score_threshold:
-            return "Breakout"
+            # 在震荡区间中，必须突破边界才算Breakout
+            if r2 < r2_threshold_for_strict_breakout:
+                if is_breakout_boundary:
+                    return "Breakout"
+            else:
+                # 在已有趋势中，如果突破边界则确认Breakout，否则仍可能是趋势加速
+                # 优先检查是否突破边界
+                if is_breakout_boundary:
+                    return "Breakout"
+                # 如果没有突破边界但Z-Score和ADX都很高，也可能是趋势加速（暂时也判定为Breakout）
+                # 可以根据需要调整这个逻辑
+                elif curr_z > z_threshold * 1.5 and curr_adx > breakout_adx_high:
+                    return "Breakout"
         
         # B. CHANNEL: 明确的趋势通道（细分为Tight和Broad）
         if channel_score >= channel_score_threshold_high:
@@ -246,9 +274,9 @@ if __name__ == '__main__':
     from client import ok_client
     import asyncio
 
-    end_date = "2026-01-12 17:10:01"
+    end_date = "2026-01-18 21:56:01"
 
-    df_5m = asyncio.run(ok_client.get_klines_end_with_specify_time('XAUT-USDT-SWAP', end_date,5, 200, True))
+    df_5m = asyncio.run(ok_client.get_klines_end_with_specify_time('SOL-USDT-SWAP', end_date,15, 200, True))
     # df_1h =  asyncio.run(ok_client.get_klines('BTC-USDT-SWAP', 60, 200, False))
 
     # 将OHLC数据转换为数值类型
