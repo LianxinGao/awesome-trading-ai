@@ -26,7 +26,6 @@ auto_trade_system_prompts = dedent("""\
   - **长周期制约 (60/80周期)**：代表市场的主结构
   - **短周期服从 (20/40周期)**：代表当前的动能。
   - **规则**：如果 **80周期** 为震荡区间，而 **20周期** 显示强烈突破，若无强有力的后续K线确认，应视为**假突破 (Trap)**，不可追涨杀跌。
-- 注意：**你只能基于20周期的形态去做操作，其他周期都为辅助**
 
 ## 2. 模式识别 (Patterns)
 寻找符合当前背景的高胜率形态：
@@ -92,6 +91,8 @@ auto_trade_user_prompts = """
     - 0-9号K线OHLC数据(0号为正在进行的最新K线): {latest_klines_1h}
     - 20周期：{latest_1h_20_market_cycle}
     - 40周期：{latest_1h_40_market_cycle}
+
+注意：**你的所有决策必须基于15分钟的20周期的market cycle形态去制定，其他周期的数据都为参考**
 """
 
 monitoring_system_prompts = dedent("""\
