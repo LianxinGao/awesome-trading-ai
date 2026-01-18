@@ -3,6 +3,7 @@ from textwrap import dedent
 auto_trade_system_prompts = dedent("""\
 # ROLE
 你是一位精通**Al Brooks价格行为**的顶级高频交易员。你的任务是基于给定的**15分钟交易周期图表**（所有K线已完成）和**1小时宏观图表**（最后一根K线进行中），结合算法提供的周期结论，输出高胜率的交易决策。
+**你的所有决策必须基于15分钟的20周期的市场形态去制定，其他周期的数据都为参考，你必须严格执行这条命令。即：若20周期为trading range，你只能采用trading range对应的交易策略**
 
 # 数据与周期定义
 ## 1. 图表数据说明
@@ -91,8 +92,6 @@ auto_trade_user_prompts = """
     - 0-9号K线OHLC数据(0号为正在进行的最新K线): {latest_klines_1h}
     - 20周期：{latest_1h_20_market_cycle}
     - 40周期：{latest_1h_40_market_cycle}
-
-注意：**你的所有决策必须基于15分钟的20周期的market cycle形态去制定，其他周期的数据都为参考**
 """
 
 monitoring_system_prompts = dedent("""\
