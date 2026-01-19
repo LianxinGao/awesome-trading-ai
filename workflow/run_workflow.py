@@ -171,23 +171,23 @@ async def run_workflow():
     tickest = ticket_factory.get_ticket_data()
     if tickest:
         print(f'持仓中: {tickest}')
-        for config in monitoring_configs:
-            inst_id = config['inst_id']
-            ok_ticket = [ticket for ticket in tickest if ticket.inst_id == inst_id]
-            ticket = comon_utils.load_latest_ticket(inst_id, SaveOrderInfo)
-            # comon_utils.save_confirmed_ticket(inst_id, ticket.model_dump_json(indent=4))
-            interval = config['interval']
-            limit = config['limit']
-            precision = config['precision']
-            entry_price = float(ticket.entry_price) if ticket.entry_price else float(ok_ticket[0].avg_px)
-            entry_type = ticket.action
-            # early_close_strategy = ticket.early_close_strategy
-            tp = ticket.take_profit_price
-            sl = ticket.stop_loss_price
-            reason = ticket.reason
-            time = ticket.time
-            await run_monitoring(inst_id, interval, limit, precision, entry_price, entry_type,
-                                 time, tp, sl, reason)
+        # for config in monitoring_configs:
+        #     inst_id = config['inst_id']
+        #     ok_ticket = [ticket for ticket in tickest if ticket.inst_id == inst_id]
+        #     ticket = comon_utils.load_latest_ticket(inst_id, SaveOrderInfo)
+        #     # comon_utils.save_confirmed_ticket(inst_id, ticket.model_dump_json(indent=4))
+        #     interval = config['interval']
+        #     limit = config['limit']
+        #     precision = config['precision']
+        #     entry_price = float(ticket.entry_price) if ticket.entry_price else float(ok_ticket[0].avg_px)
+        #     entry_type = ticket.action
+        #     # early_close_strategy = ticket.early_close_strategy
+        #     tp = ticket.take_profit_price
+        #     sl = ticket.stop_loss_price
+        #     reason = ticket.reason
+        #     time = ticket.time
+        #     await run_monitoring(inst_id, interval, limit, precision, entry_price, entry_type,
+        #                          time, tp, sl, reason)
 
     else:
         tasks = []
