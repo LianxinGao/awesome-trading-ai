@@ -274,27 +274,27 @@ if __name__ == '__main__':
     from client import ok_client
     import asyncio
 
-    end_date = "2026-01-18 21:56:01"
+    end_date = "2026-01-19 14:15:01"
 
-    df_5m = asyncio.run(ok_client.get_klines_end_with_specify_time('SOL-USDT-SWAP', end_date,15, 200, True))
+    df_15m = asyncio.run(ok_client.get_klines_end_with_specify_time('SOL-USDT-SWAP', end_date,15, 200, True))
     # df_1h =  asyncio.run(ok_client.get_klines('BTC-USDT-SWAP', 60, 200, False))
 
     # 将OHLC数据转换为数值类型
-    df_5m = convert_ohlc_to_numeric(df_5m)
+    df_15m = convert_ohlc_to_numeric(df_15m)
     # df_1h = convert_ohlc_to_numeric(df_1h)
-    print(df_5m.tail())
+    print(df_15m.tail())
     
     classifier = UltimateMarketClassifier()
     
     # 使用不同窗口大小和参数进行测试
-    state = classifier.get_single_mode(df_5m, window=20, z_threshold=1.5)
+    state = classifier.get_single_mode(df_15m, window=20, z_threshold=1.5)
     print(f"Window 20: {state}")
     
-    state = classifier.get_single_mode(df_5m, window=40, z_threshold=1.5)
+    state = classifier.get_single_mode(df_15m, window=40, z_threshold=1.5)
     print(f"Window 40: {state}")
     
-    state = classifier.get_single_mode(df_5m, window=60, z_threshold=1.5)
+    state = classifier.get_single_mode(df_15m, window=60, z_threshold=1.5)
     print(f"Window 60: {state}")
 
-    state = classifier.get_single_mode(df_5m, window=80, z_threshold=1.5)
+    state = classifier.get_single_mode(df_15m, window=80, z_threshold=1.5)
     print(f"Window 80: {state}")

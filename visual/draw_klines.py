@@ -321,7 +321,7 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(35, 18), markers=
 if __name__ == "__main__":
     # 获取数据
     from client import ok_client
-    klines = asyncio.run(ok_client.get_klines("BTC-USDT-SWAP",  5, 200, False))
+    klines = asyncio.run(ok_client.get_klines("SOL-USDT-SWAP",  15, 200, False))
     data = asyncio.run(get_kline_with_ema(klines, 2))
     print("Data shape:", data.shape)
     print(data.tail())
