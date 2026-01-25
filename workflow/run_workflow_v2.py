@@ -57,6 +57,11 @@ def _get_kline_with_ema_sync(klines, precision):
 
 
 def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=None):
+    """在线程中执行的绘图函数，需要在线程内部设置 matplotlib 后端"""
+    # 在线程中重新设置 matplotlib 后端，确保每个线程都有正确的后端
+    import matplotlib
+    matplotlib.use('Agg', force=False)  # force=False 避免覆盖已设置的后端
+    
     if not markers:
         markers = []
     fig, ax = plot_candlestick(klines_data, title=title, markers=markers, entry_price=entry_price,
