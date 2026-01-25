@@ -57,44 +57,20 @@ def _get_kline_with_ema_sync(klines, precision):
 
 
 def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=None):
-    """在线程中执行的绘图函数，需要在线程内部重新导入和设置 matplotlib"""
-    try:
-        # 在线程中重新导入 matplotlib，确保每个线程都有独立的后端设置
-        import matplotlib
-        matplotlib.use('Agg', force=True)  # force=True 强制设置后端
-        
-        # 验证后端设置是否成功
-        backend = matplotlib.get_backend()
-        if backend != 'Agg':
-            raise RuntimeError(f"Failed to set matplotlib backend to Agg, got {backend}")
-        
-        # 重新导入 pyplot，确保使用新设置的后端
-        import sys
-        if 'matplotlib.pyplot' in sys.modules:
-            del sys.modules['matplotlib.pyplot']
-        import matplotlib.pyplot as plt_thread
-        
-        # 重新导入 plot_candlestick，确保它使用新设置的后端
-        if 'visual.draw_klines' in sys.modules:
-            del sys.modules['visual.draw_klines']
-        from visual.draw_klines import plot_candlestick
-        
-        if not markers:
-            markers = []
-        fig, ax = plot_candlestick(klines_data, title=title, markers=markers, entry_price=entry_price,
-                                   entry_type=entry_type)
+    if not markers:
+        markers = []
+    fig, ax = plot_candlestick(klines_data, title=title, markers=markers, entry_price=entry_price,
+                               entry_type=entry_type)
 
-        img_buffer = io.BytesIO()
-        plt_thread.savefig(img_buffer, format='png', dpi=200, bbox_inches='tight')
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format='png', dpi=200, bbox_inches='tight')
 
-        plt_thread.close(fig)
+    plt.close(fig)
 
-        # 获取图像字节数据
-        img_buffer.seek(0)  # 移动到缓冲区开头
-        image_bytes = img_buffer.getvalue()
-        return image_bytes
-    except Exception as e:
-        raise RuntimeError(f"Error in draw_klines: {type(e).__name__}: {e}") from e
+    # 获取图像字节数据
+    img_buffer.seek(0)  # 移动到缓冲区开头
+    image_bytes = img_buffer.getvalue()
+    return image_bytes
 
 
 async def find_trade_chance():
