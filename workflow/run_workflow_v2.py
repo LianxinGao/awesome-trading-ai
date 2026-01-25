@@ -1,4 +1,7 @@
 import asyncio
+import matplotlib
+matplotlib.use('Agg')  # 必须在导入 pyplot 之前设置后端，适用于无GUI环境
+import matplotlib.pyplot as plt
 from ai.gemini_client import request_ai
 from filters import tech_filters
 from ai.models import AutoTradeResponse, MonitoringResponse, SaveOrderInfo, AutoTradeResponseV2
@@ -7,7 +10,6 @@ from ai.auto_prompts_v2 import auto_trade_system_prompts, auto_trade_user_prompt
 from client.ok_models import TdMode
 from visual.draw_klines import plot_candlestick
 from visual.prepare_draw_data import get_kline_with_ema
-import matplotlib.pyplot as plt
 import io
 from common import tg_tools, comon_utils
 import json
