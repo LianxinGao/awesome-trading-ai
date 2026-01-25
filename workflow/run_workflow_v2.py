@@ -14,10 +14,15 @@ import json
 from coin_configs import target_coins, evaluate_configs
 from client import ok_client
 from factory import ticket_factory
-from datetime import datetime, timedelta
 from exp.get_market_cycle import UltimateMarketClassifier
 
 classifier = UltimateMarketClassifier()
+
+# 价格调整系数
+long_target_coef = 0.998  # 做多止盈系数 (稍微调低，更容易成交)
+short_target_coef = 1.002  # 做空止盈系数 (稍微调高，更容易成交)
+long_stop_loss_coef = 0.995  # 做多止损系数 (稍微调低，增加容错)
+short_stop_loss_coef = 1.005  # 做空止损系数 (稍微调高，增加容错)
 
 
 def get_last_10_rows(df):
@@ -88,6 +93,7 @@ async def find_trade_chance():
 
         action = result['action']
         inst_id = result['symbol']
+        precision = result['precision']
         coin_target_cycle = kline_results_dict[inst_id]['klines_target_cycle']
         pattern_filter = tech_filters.filter_by_patterns(coin_target_cycle, 5, action)
         count = pattern_filter.get('count', 0)
@@ -106,7 +112,6 @@ async def find_trade_chance():
         if not atr_filter.get('passed', False):
             continue
 
-
         ai_pos_side = 'long' if action == 'BUY' else 'short'
         ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
         if ok_ticket:
@@ -115,8 +120,12 @@ async def find_trade_chance():
                 ticket_factory.close_position(inst_id)
                 if action == 'BUY':
                     side = 'buy'
+                    take_profit = str(round(float(take_profit) * long_target_coef, precision))
+                    stop_loss = str(round(float(stop_loss) * long_stop_loss_coef, precision))
                 else:
                     side = 'sell'
+                    take_profit = str(round(float(take_profit) * short_target_coef, precision))
+                    stop_loss = str(round(float(stop_loss) * short_stop_loss_coef, precision))
                 if entry_type == '市价委托':
                     ticket_factory.order_position(inst_id, side, sz, take_profit, stop_loss)
                 else:
@@ -149,7 +158,7 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
     ]
     modes = await asyncio.gather(*mode_tasks)
     mode_target_20, mode_target_40, mode_target_60, mode_target_80, mode_high_20, mode_high_40 = modes
-    
+
     print(f'{inst_id} target 20周期: {mode_target_20}')
     print(f'{inst_id} target 40周期: {mode_target_40}')
     print(f'{inst_id} target 60周期: {mode_target_60}')
@@ -187,6 +196,7 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
     auto_result_dict = dict(auto_result)
     auto_result_dict['symbol'] = inst_id
     auto_result_dict['sz'] = sz
+    auto_result_dict['precision'] = precision
     # auto_response = json.dumps(auto_result_dict, indent=2, ensure_ascii=False)
     return auto_result_dict
     # print(auto_response)
