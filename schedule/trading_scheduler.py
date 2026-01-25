@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 from datetime import datetime, timedelta
 from typing import Callable, List
 from client import ok_client
@@ -49,6 +50,7 @@ class TradingScheduler:
             result = await self.agent_func()
             return result
         except Exception as e:
+            traceback.print_exc()
             print(f"执行交易决策时发生错误: {e}")
             return None
     
@@ -74,6 +76,7 @@ class TradingScheduler:
                     
             except Exception as e:
                 print(f"调度器运行时发生错误: {e}")
+                traceback.print_exc()
                 await asyncio.sleep(60)  # 出错后等待1分钟再继续
     
     async def start_with_immediate_execution(self):
