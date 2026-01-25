@@ -124,7 +124,7 @@ def filter_by_patterns(df: pd.DataFrame, n_klines: int, action: str, pattern_typ
             }
 
         # 确保数据按时间正序排列（talib需要）
-        df = df.sort_values('time').reset_index(drop=True)
+        df = df.sort_values('timestamp').reset_index(drop=True)
 
         # 只取最后n_klines根K线
         df = df.tail(n_klines).reset_index(drop=True)
@@ -261,7 +261,7 @@ def filter_by_atr_distance(df:pd.DataFrame, window_size: int, entry_price: float
             }
 
         # 确保数据按时间正序排列
-        df = df.sort_values('time').reset_index(drop=True)
+        df = df.sort_values('timestamp').reset_index(drop=True)
 
         # 转换为numpy数组（talib需要）
         high_prices = df['high'].values.astype(np.float64)

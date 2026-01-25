@@ -1,3 +1,5 @@
+import traceback
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.patches import Rectangle
@@ -6,6 +8,7 @@ import numpy as np
 from datetime import datetime
 import sys
 import os
+import warnings
 from pathlib import Path
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -312,8 +315,15 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(35, 18), markers=
     if legend_elements:
         ax.legend(handles=legend_elements, loc='upper left')
     
-    # 自动调整布局
-    plt.tight_layout()
+    # 自动调整布局，忽略无法应用的警告
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=UserWarning, message='.*Tight layout not applied.*')
+        try:
+            plt.tight_layout()
+        except:
+            # 如果 tight_layout 失败，使用手动调整
+            traceback.print_exc()
+            # plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.1)
     
     return fig, ax
 
