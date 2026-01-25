@@ -63,8 +63,8 @@ def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=N
                                entry_type=entry_type)
 
     img_buffer = io.BytesIO()
-    plt.savefig(img_buffer, format='png', dpi=200, bbox_inches='tight')
-
+    # 使用 fig.savefig 而不是 plt.savefig，避免多线程环境下的全局状态问题
+    fig.savefig(img_buffer, format='png', dpi=200, bbox_inches='tight')
     plt.close(fig)
 
     # 获取图像字节数据
