@@ -1,5 +1,5 @@
 from schedule.trading_scheduler import TradingScheduler
-from workflow.run_workflow import run_workflow
+from workflow.run_workflow_v2 import run_workflow
 import asyncio
 
 
