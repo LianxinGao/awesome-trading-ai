@@ -90,18 +90,19 @@ async def find_trade_chance():
     ai_results = await asyncio.gather(*ai_tasks)
 
     for result in ai_results:
-        if result['action'] == 'WAIT':
-            continue
-
         action = result['action']
         inst_id = result['symbol']
         precision = result['precision']
+        if action == 'WAIT':
+            print(f'{inst_id} 暂无交易机会')
+            continue
         coin_target_cycle = kline_results_dict[inst_id]['klines_target_cycle']
         pattern_filter = tech_filters.filter_by_patterns(coin_target_cycle, 5, action)
         count = pattern_filter.get('count', 0)
         has_conflict = pattern_filter.get('has_conflict', False)
         direction_match = pattern_filter.get('direction_match', False)
         if has_conflict or not direction_match or count == 0:
+            print(f'{inst_id} 被pattern_filter过滤')
             continue
 
         entry_price = result['entry_price']
@@ -112,8 +113,11 @@ async def find_trade_chance():
 
         atr_filter = tech_filters.filter_by_atr_distance(coin_target_cycle, 20, entry_price, take_profit, 1)
         if not atr_filter.get('passed', False):
+            print(f'{inst_id} 被atr_filter过滤')
             continue
 
+        print(f'{inst_id} 符合交易条件')
+        print(json.dumps(result, ensure_ascii=False, indent=4))
         ai_pos_side = 'long' if action == 'BUY' else 'short'
         ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
         if ok_ticket:
