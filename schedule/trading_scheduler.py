@@ -53,6 +53,10 @@ class TradingScheduler:
             traceback.print_exc()
             print(f"执行交易决策时发生错误: {e}")
             return None
+        finally:
+            # 每次执行后清理内存，防止长期运行导致内存泄漏
+            import gc
+            gc.collect()
     
     async def start(self):
         """启动调度器"""

@@ -61,14 +61,21 @@ def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=N
                                entry_type=entry_type)
 
     img_buffer = io.BytesIO()
-    # 使用 fig.savefig 而不是 plt.savefig，避免多线程环境下的全局状态问题
-    fig.savefig(img_buffer, format='png', dpi=200, bbox_inches='tight')
-    plt.close(fig)
-
-    # 获取图像字节数据
-    img_buffer.seek(0)  # 移动到缓冲区开头
-    image_bytes = img_buffer.getvalue()
-    img_buffer.close()  # 显式关闭缓冲区以释放内存
+    try:
+        # 使用 fig.savefig 而不是 plt.savefig，避免多线程环境下的全局状态问题
+        fig.savefig(img_buffer, format='png', dpi=200, bbox_inches='tight')
+        # 获取图像字节数据
+        img_buffer.seek(0)  # 移动到缓冲区开头
+        image_bytes = img_buffer.getvalue()
+    finally:
+        # 确保资源被释放
+        plt.close(fig)  # 关闭图表对象
+        plt.close('all')  # 关闭所有matplotlib图表，防止内存泄漏
+        img_buffer.close()  # 显式关闭缓冲区以释放内存
+        # 清理matplotlib的缓存
+        import gc
+        gc.collect()  # 强制垃圾回收
+    
     return image_bytes
 
 
@@ -78,64 +85,97 @@ async def find_trade_chance():
     for coin in target_coins:
         task = _get_klines(coin['inst_id'], coin['intervals'], coin['limit'], coin['precision'], coin['sz'])
         kline_tasks.append(task)
-    kline_results = await asyncio.gather(*kline_tasks)
-    kline_results_dict = {coin['inst_id']: coin for coin in kline_results}
+    
+    ai_tasks = []  # 在外部定义，确保 finally 块可以访问
+    kline_results = None
+    kline_results_dict = None
+    
+    # 使用 try-finally 确保资源释放
+    try:
+        kline_results = await asyncio.gather(*kline_tasks)
+        kline_results_dict = {coin['inst_id']: coin for coin in kline_results}
 
-    ai_tasks = []
-    for coin in kline_results:
-        task = asyncio.create_task(run_inst(coin['inst_id'], coin['klines_target_cycle'], coin['klines_high_cycle'],
-                                             coin['precision'], coin['sz']))
-        ai_tasks.append(task)
+        for coin in kline_results:
+            task = asyncio.create_task(run_inst(coin['inst_id'], coin['klines_target_cycle'], coin['klines_high_cycle'],
+                                                 coin['precision'], coin['sz']))
+            ai_tasks.append(task)
 
-    # 流式处理：每个任务完成就立即处理结果
-    for coro in asyncio.as_completed(ai_tasks):
-        result = await coro
-        print(json.dumps(result, ensure_ascii=False, indent=4))
-        action = result['action']
-        inst_id = result['symbol']
-        precision = result['precision']
-        if action == 'WAIT':
-            print(f'{inst_id} 暂无交易机会')
-            continue
-        coin_target_cycle = kline_results_dict[inst_id]['klines_target_cycle']
-        pattern_filter = tech_filters.filter_by_patterns(coin_target_cycle, 5, action)
-        count = pattern_filter.get('count', 0)
-        has_conflict = pattern_filter.get('has_conflict', False)
-        direction_match = pattern_filter.get('direction_match', False)
-        if has_conflict or not direction_match or count == 0:
-            print(f'{inst_id} 被pattern_filter过滤')
-            continue
+        # 流式处理：每个任务完成就立即处理结果
+        for coro in asyncio.as_completed(ai_tasks):
+            result = None
+            try:
+                result = await coro
+                print(json.dumps(result, ensure_ascii=False, indent=4))
+                action = result['action']
+                inst_id = result['symbol']
+                precision = result['precision']
+                if action == 'WAIT':
+                    print(f'{inst_id} 暂无交易机会')
+                    continue
+                coin_target_cycle = kline_results_dict[inst_id]['klines_target_cycle']
+                pattern_filter = tech_filters.filter_by_patterns(coin_target_cycle, 5, action)
+                count = pattern_filter.get('count', 0)
+                has_conflict = pattern_filter.get('has_conflict', False)
+                direction_match = pattern_filter.get('direction_match', False)
+                if has_conflict or not direction_match or count == 0:
+                    print(f'{inst_id} 被pattern_filter过滤')
+                    continue
 
-        entry_price = result['entry_price']
-        take_profit = result['take_profit']
-        stop_loss = result['stop_loss']
-        entry_type = result['entry_type']
-        sz = result['sz']
+                entry_price = float(result['entry_price'])
+                take_profit = float(result['take_profit'])
+                stop_loss = float(result['stop_loss'])
+                entry_type = result['entry_type']
+                sz = result['sz']
 
-        atr_filter = tech_filters.filter_by_atr_distance(coin_target_cycle, 20, entry_price, take_profit, 1)
-        if not atr_filter.get('passed', False):
-            print(f'{inst_id} 被atr_filter过滤')
-            continue
+                atr_filter = tech_filters.filter_by_atr_distance(coin_target_cycle, 20, entry_price, take_profit, 1)
+                if not atr_filter.get('passed', False):
+                    print(f'{inst_id} 被atr_filter过滤')
+                    continue
 
-        print(f'{inst_id} 符合交易条件')
-        ai_pos_side = 'long' if action == 'BUY' else 'short'
-        ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
-        if ok_ticket:
-            pos_side = ok_ticket[0].pos_side
-            if ai_pos_side != pos_side:
-                ticket_factory.close_position(inst_id)
-                if action == 'BUY':
-                    side = 'buy'
-                    take_profit = str(round(float(take_profit) * long_target_coef, precision))
-                    stop_loss = str(round(float(stop_loss) * long_stop_loss_coef, precision))
-                else:
-                    side = 'sell'
-                    take_profit = str(round(float(take_profit) * short_target_coef, precision))
-                    stop_loss = str(round(float(stop_loss) * short_stop_loss_coef, precision))
-                if entry_type == '市价委托':
-                    ticket_factory.order_position(inst_id, side, sz, take_profit, stop_loss)
-                else:
-                    ticket_factory.order_algo_order(inst_id, side, sz, entry_price, take_profit, stop_loss)
+                print(f'{inst_id} 符合交易条件')
+                ai_pos_side = 'long' if action == 'BUY' else 'short'
+                ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
+                if ok_ticket:
+                    pos_side = ok_ticket[0].pos_side
+                    if ai_pos_side != pos_side:
+                        ticket_factory.close_position(inst_id)
+                        if action == 'BUY':
+                            side = 'buy'
+                            take_profit = str(round(take_profit * long_target_coef, precision))
+                            stop_loss = str(round(stop_loss * long_stop_loss_coef, precision))
+                        else:
+                            side = 'sell'
+                            take_profit = str(round(take_profit * short_target_coef, precision))
+                            stop_loss = str(round(stop_loss * short_stop_loss_coef, precision))
+                        if entry_type == '市价委托':
+                            ticket_factory.order_position(inst_id, side, sz, take_profit, stop_loss)
+                        else:
+                            ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss)
+            except Exception as e:
+                print(f"处理任务结果时发生错误: {e}")
+                import traceback
+                traceback.print_exc()
+            finally:
+                # 确保清理结果数据
+                if result is not None:
+                    del result
+    finally:
+        # 确保所有任务都被清理
+        for task in ai_tasks:
+            if not task.done():
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+        
+        # 释放 kline_results 内存
+        import gc
+        if kline_results is not None:
+            del kline_results
+        if kline_results_dict is not None:
+            del kline_results_dict
+        gc.collect()
 
 
 async def _get_klines(inst_id: str, intervals: list[int], limit: int, precision: int, sz: float):
@@ -191,6 +231,8 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
     
     # 优化：使用完后显式释放 DataFrame 内存
     del klines_target_cycle_data, klines_high_cycle_data
+    import gc
+    gc.collect()  # 强制垃圾回收释放 DataFrame 内存
 
     auto_user_prompt = auto_trade_user_prompts.format(latest_klines_15min=last_10_str_target_cycle,
                                                       latest_klines_1h=last_10_str_high_cycle,
@@ -201,14 +243,20 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
                                                       latest_1h_20_market_cycle=mode_high_20,
                                                       latest_1h_40_market_cycle=mode_high_40
                                                       )
-    auto_result = await request_ai(auto_trade_system_prompts, auto_user_prompt,
-                                   [image_bytes_target_cycle, image_bytes_high_cycle],
-                                   AutoTradeResponseV2)
-    auto_result_dict = dict(auto_result)
-    auto_result_dict['symbol'] = inst_id
-    auto_result_dict['sz'] = sz
-    auto_result_dict['precision'] = precision
-    # auto_response = json.dumps(auto_result_dict, indent=2, ensure_ascii=False)
+    
+    try:
+        auto_result = await request_ai(auto_trade_system_prompts, auto_user_prompt,
+                                       [image_bytes_target_cycle, image_bytes_high_cycle],
+                                       AutoTradeResponseV2)
+        auto_result_dict = dict(auto_result)
+        auto_result_dict['symbol'] = inst_id
+        auto_result_dict['sz'] = sz
+        auto_result_dict['precision'] = precision
+    finally:
+        # 释放图像字节数据内存
+        del image_bytes_target_cycle, image_bytes_high_cycle
+        gc.collect()
+    
     return auto_result_dict
     # print(auto_response)
     # action = auto_result['action']
@@ -246,14 +294,19 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
 
 
 async def run_workflow():
-    for coin_config in target_coins:
-        inst_id = coin_config['inst_id']
-        # leverage = coin_config['leverage']
-        # ok_client.set_leverage(inst_id, leverage, TdMode.CROSS)
-        # print(f"设置{inst_id}的合约杠杆为{leverage}倍")
-        ticket_factory.cancel_order(inst_id)
+    try:
+        for coin_config in target_coins:
+            inst_id = coin_config['inst_id']
+            # leverage = coin_config['leverage']
+            # ok_client.set_leverage(inst_id, leverage, TdMode.CROSS)
+            # print(f"设置{inst_id}的合约杠杆为{leverage}倍")
+            ticket_factory.cancel_order(inst_id)
 
-    await find_trade_chance()
+        await find_trade_chance()
+    finally:
+        # 每次工作流执行完后强制垃圾回收，防止内存累积
+        import gc
+        gc.collect()
 
 
 if __name__ == '__main__':
