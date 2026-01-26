@@ -19,6 +19,7 @@ class TradingScheduler:
         self.agent_func = agent_func
         self.running = False
         self.time_interval = time_interval
+        self.current_task = None  # 跟踪当前执行的任务，防止重叠执行
 
         # result = ok_client.set_leverage(config.TRADING_INST_ID, config.LEVERAGE, TdMode.CROSS)
         # print(f"设置合约杠杆为{config.LEVERAGE}倍: {result}")
@@ -76,7 +77,25 @@ class TradingScheduler:
                 await asyncio.sleep(wait_seconds)
                 
                 if self.running:
-                    await self.run_once()
+                    # 优化：检查是否有正在执行的任务，防止重叠执行
+                    if self.current_task is not None and not self.current_task.done():
+                        print("警告：上一次任务仍在执行中，跳过本次执行以避免资源竞争")
+                        continue
+                    
+                    # 创建新任务并跟踪
+                    self.current_task = asyncio.create_task(self.run_once())
+                    try:
+                        await self.current_task
+                    except Exception as e:
+                        print(f"任务执行出错: {e}")
+                        traceback.print_exc()
+                    finally:
+                        # 任务完成后清理
+                        if self.current_task and self.current_task.done():
+                            self.current_task = None
+                        # 强制垃圾回收
+                        import gc
+                        gc.collect()
                     
             except Exception as e:
                 print(f"调度器运行时发生错误: {e}")

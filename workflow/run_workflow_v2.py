@@ -17,6 +17,23 @@ from exp.get_market_cycle import UltimateMarketClassifier
 
 classifier = UltimateMarketClassifier()
 
+# 优化：全局信号量，限制所有币种的总并发线程数，避免CPU占用过高
+# 注意：需要在事件循环中初始化，所以使用None作为初始值，在第一次使用时创建
+_thread_semaphore = None
+
+def get_thread_semaphore():
+    """获取全局线程信号量，如果不存在则创建"""
+    global _thread_semaphore
+    if _thread_semaphore is None:
+        import asyncio
+        try:
+            loop = asyncio.get_running_loop()
+            _thread_semaphore = asyncio.Semaphore(4)  # 最多同时4个线程任务
+        except RuntimeError:
+            # 如果没有运行中的事件循环，返回None，将在运行时创建
+            pass
+    return _thread_semaphore
+
 # 价格调整系数
 long_target_coef = 0.998  # 做多止盈系数 (稍微调低，更容易成交)
 short_target_coef = 1.002  # 做空止盈系数 (稍微调高，更容易成交)
@@ -62,8 +79,9 @@ def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=N
 
     img_buffer = io.BytesIO()
     try:
-        # 使用 fig.savefig 而不是 plt.savefig，避免多线程环境下的全局状态问题
-        fig.savefig(img_buffer, format='png', dpi=200, bbox_inches='tight')
+        # 优化：降低DPI从200到100，减少内存占用（图像大小减少约75%）
+        # 图表尺寸已经在plot_candlestick中设置，这里只优化DPI
+        fig.savefig(img_buffer, format='png', dpi=100, bbox_inches='tight')
         # 获取图像字节数据
         img_buffer.seek(0)  # 移动到缓冲区开头
         image_bytes = img_buffer.getvalue()
@@ -172,9 +190,17 @@ async def find_trade_chance():
         # 释放 kline_results 内存
         import gc
         if kline_results is not None:
+            # 优化：逐个清理每个币种的数据
+            for coin_result in kline_results:
+                if 'klines_target_cycle' in coin_result:
+                    del coin_result['klines_target_cycle']
+                if 'klines_high_cycle' in coin_result:
+                    del coin_result['klines_high_cycle']
             del kline_results
         if kline_results_dict is not None:
             del kline_results_dict
+        # 清理任务列表
+        ai_tasks.clear()
         gc.collect()
 
 
@@ -192,16 +218,30 @@ async def _get_klines(inst_id: str, intervals: list[int], limit: int, precision:
 
 
 async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: int, sz: float):
+    # 优化：限制并发线程数量，避免创建过多线程导致CPU占用过高
+    # 使用全局信号量限制同时运行的线程任务数量
+    import asyncio
+    semaphore = get_thread_semaphore()
+    if semaphore is None:
+        # 如果信号量不存在，创建新的（事件循环已存在）
+        semaphore = asyncio.Semaphore(4)
+        global _thread_semaphore
+        _thread_semaphore = semaphore
+    
+    async def limited_to_thread(func, *args):
+        async with semaphore:
+            return await asyncio.to_thread(func, *args)
+    
     # 并发执行所有同步阻塞操作
     # 1. 并发计算所有市场周期模式
     # 注意：get_single_mode 内部已经有 copy，这里不需要再 copy
     mode_tasks = [
-        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle, 20),
-        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle, 40),
-        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle, 60),
-        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle, 80),
-        asyncio.to_thread(classifier.get_single_mode, klines_high_cycle, 20),
-        asyncio.to_thread(classifier.get_single_mode, klines_high_cycle, 40),
+        limited_to_thread(classifier.get_single_mode, klines_target_cycle, 20),
+        limited_to_thread(classifier.get_single_mode, klines_target_cycle, 40),
+        limited_to_thread(classifier.get_single_mode, klines_target_cycle, 60),
+        limited_to_thread(classifier.get_single_mode, klines_target_cycle, 80),
+        limited_to_thread(classifier.get_single_mode, klines_high_cycle, 20),
+        limited_to_thread(classifier.get_single_mode, klines_high_cycle, 40),
     ]
     modes = await asyncio.gather(*mode_tasks)
     mode_target_20, mode_target_40, mode_target_60, mode_target_80, mode_high_20, mode_high_40 = modes
@@ -216,8 +256,8 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
     # 2. 并发计算 EMA 数据
     # 注意：_get_kline_with_ema_sync 内部已经有 copy，这里不需要再 copy
     klines_target_cycle_data, klines_high_cycle_data = await asyncio.gather(
-        asyncio.to_thread(_get_kline_with_ema_sync, klines_target_cycle, precision),
-        asyncio.to_thread(_get_kline_with_ema_sync, klines_high_cycle, precision)
+        limited_to_thread(_get_kline_with_ema_sync, klines_target_cycle, precision),
+        limited_to_thread(_get_kline_with_ema_sync, klines_high_cycle, precision)
     )
 
     # 3. 并发生成图表
@@ -225,8 +265,8 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
     last_10_str_high_cycle = get_last_10_rows(klines_high_cycle_data)
 
     image_bytes_target_cycle, image_bytes_high_cycle = await asyncio.gather(
-        asyncio.to_thread(draw_klines, klines_target_cycle_data, f"{inst_id}_15min_Candlestick_Chart"),
-        asyncio.to_thread(draw_klines, klines_high_cycle_data, f"{inst_id}_1hour_Candlestick_Chart")
+        limited_to_thread(draw_klines, klines_target_cycle_data, f"{inst_id}_15min_Candlestick_Chart"),
+        limited_to_thread(draw_klines, klines_high_cycle_data, f"{inst_id}_1hour_Candlestick_Chart")
     )
     
     # 优化：使用完后显式释放 DataFrame 内存

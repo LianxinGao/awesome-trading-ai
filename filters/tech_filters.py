@@ -225,7 +225,7 @@ def filter_by_patterns(df: pd.DataFrame, n_klines: int, action: str, pattern_typ
         has_conflict = has_bullish and has_bearish
 
         # 检查检测到的形态方向是否与strategy方向一致
-        # strategy固定为'BUY'或'SELL'
+        # action固定为'BUY'或'SELL'
         direction_match = any(p['direction'] == action for p in detected_patterns)
 
         return {

@@ -36,13 +36,14 @@ async def request_ai(
     last_exception = None
     
     for attempt in range(max_retries):
+        client = None
         try:
             # 准备图像数据
             image_datas = [types.Part.from_bytes(data=image_bytes, mime_type='image/png') 
                           for image_bytes in image_bytes_list]
             contents = image_datas + [user_prompt]
             
-            # 创建客户端
+            # 优化：创建客户端后立即使用，使用完后清理图像数据
             client = genai.Client()
             
             # 使用 asyncio.wait_for 设置超时
@@ -78,11 +79,23 @@ async def request_ai(
             if attempt > 0:
                 print(f"AI API 调用成功（第 {attempt + 1} 次尝试）")
             
+            # 优化：使用完后立即清理图像数据
+            del image_datas, contents
+            import gc
+            gc.collect()
+            
             return result_dict
             
         except asyncio.TimeoutError:
             last_exception = Exception(f"API 调用超时（超过 {timeout} 秒）")
             print(f"AI API 调用超时，第 {attempt + 1}/{max_retries} 次尝试")
+            # 优化：清理资源
+            if 'image_datas' in locals():
+                del image_datas
+            if 'contents' in locals():
+                del contents
+            import gc
+            gc.collect()
             if attempt < max_retries - 1:
                 await asyncio.sleep(2 ** attempt)  # 指数退避：2秒、4秒、8秒
             continue
@@ -92,6 +105,13 @@ async def request_ai(
             print(f"AI API 响应解析失败（第 {attempt + 1} 次尝试）: {e}")
             # 验证错误通常不会因为重试而解决，直接返回 None
             traceback.print_exc()
+            # 优化：清理资源
+            if 'image_datas' in locals():
+                del image_datas
+            if 'contents' in locals():
+                del contents
+            import gc
+            gc.collect()
             return None
             
         except Exception as e:
@@ -99,6 +119,14 @@ async def request_ai(
             error_msg = str(e)
             print(f"AI API 调用失败（第 {attempt + 1}/{max_retries} 次尝试）: {error_msg}")
             traceback.print_exc()
+            
+            # 优化：清理资源
+            if 'image_datas' in locals():
+                del image_datas
+            if 'contents' in locals():
+                del contents
+            import gc
+            gc.collect()
             
             # 如果是认证错误或配额错误，不重试
             if "quota" in error_msg.lower() or "quota" in error_msg.lower():
