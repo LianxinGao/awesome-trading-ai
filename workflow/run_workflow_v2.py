@@ -127,6 +127,7 @@ async def find_trade_chance():
                 action = result['action']
                 inst_id = result['symbol']
                 precision = result['precision']
+                print(json.dumps(result, ensure_ascii=False, indent=4))
                 if action == 'WAIT':
                     print(f'{inst_id} 暂无交易机会')
                     continue
@@ -151,7 +152,6 @@ async def find_trade_chance():
                     continue
 
                 print(f'{inst_id} 符合交易条件')
-                print(json.dumps(result, ensure_ascii=False, indent=4))
                 ai_pos_side = 'long' if action == 'BUY' else 'short'
                 ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
                 if ok_ticket:
