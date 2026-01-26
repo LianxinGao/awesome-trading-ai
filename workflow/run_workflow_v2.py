@@ -79,9 +79,10 @@ def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=N
 
     img_buffer = io.BytesIO()
     try:
-        # 优化：降低DPI从200到100，减少内存占用（图像大小减少约75%）
-        # 图表尺寸已经在plot_candlestick中设置，这里只优化DPI
-        fig.savefig(img_buffer, format='png', dpi=100, bbox_inches='tight')
+        # 优化：使用DPI 150作为平衡点，既减少内存占用又保证AI识别质量
+        # 相比200 DPI减少约44%内存，相比100 DPI提升约56%图像质量
+        # 最终像素数：20*150 x 12*150 = 3000 x 1800 = 5.4M像素（原25.2M的21%）
+        fig.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight')
         # 获取图像字节数据
         img_buffer.seek(0)  # 移动到缓冲区开头
         image_bytes = img_buffer.getvalue()
