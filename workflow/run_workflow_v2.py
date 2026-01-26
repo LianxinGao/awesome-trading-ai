@@ -28,10 +28,11 @@ short_stop_loss_coef = 1.005  # 做空止损系数 (稍微调高，增加容错)
 
 
 def get_last_10_rows(df):
-    last_10_rows = df.tail(10).reset_index(drop=True)
-    last_10_rows = last_10_rows[::-1].reset_index(drop=True)
+    # 优化：直接使用 iloc 获取最后10行并反转，避免多次创建中间 DataFrame
+    n_rows = min(10, len(df))
+    last_10_rows = df.iloc[-n_rows:].iloc[::-1].reset_index(drop=True)
     last_10_dict = {}
-    for i in range(min(10, len(last_10_rows))):
+    for i in range(n_rows):
         row = last_10_rows.iloc[i]
         last_10_dict[i] = {
             'open': row['open'],
@@ -70,6 +71,7 @@ def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=N
     # 获取图像字节数据
     img_buffer.seek(0)  # 移动到缓冲区开头
     image_bytes = img_buffer.getvalue()
+    img_buffer.close()  # 显式关闭缓冲区以释放内存
     return image_bytes
 
 
@@ -154,13 +156,14 @@ async def _get_klines(inst_id: str, intervals: list[int], limit: int, precision:
 async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: int, sz: float):
     # 并发执行所有同步阻塞操作
     # 1. 并发计算所有市场周期模式
+    # 注意：get_single_mode 内部已经有 copy，这里不需要再 copy
     mode_tasks = [
-        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle.copy(), 20),
-        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle.copy(), 40),
-        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle.copy(), 60),
-        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle.copy(), 80),
-        asyncio.to_thread(classifier.get_single_mode, klines_high_cycle.copy(), 20),
-        asyncio.to_thread(classifier.get_single_mode, klines_high_cycle.copy(), 40),
+        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle, 20),
+        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle, 40),
+        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle, 60),
+        asyncio.to_thread(classifier.get_single_mode, klines_target_cycle, 80),
+        asyncio.to_thread(classifier.get_single_mode, klines_high_cycle, 20),
+        asyncio.to_thread(classifier.get_single_mode, klines_high_cycle, 40),
     ]
     modes = await asyncio.gather(*mode_tasks)
     mode_target_20, mode_target_40, mode_target_60, mode_target_80, mode_high_20, mode_high_40 = modes
@@ -173,9 +176,10 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
     print(f'{inst_id} high 40周期: {mode_high_40}')
 
     # 2. 并发计算 EMA 数据
+    # 注意：_get_kline_with_ema_sync 内部已经有 copy，这里不需要再 copy
     klines_target_cycle_data, klines_high_cycle_data = await asyncio.gather(
-        asyncio.to_thread(_get_kline_with_ema_sync, klines_target_cycle.copy(), precision),
-        asyncio.to_thread(_get_kline_with_ema_sync, klines_high_cycle.copy(), precision)
+        asyncio.to_thread(_get_kline_with_ema_sync, klines_target_cycle, precision),
+        asyncio.to_thread(_get_kline_with_ema_sync, klines_high_cycle, precision)
     )
 
     # 3. 并发生成图表
@@ -186,6 +190,9 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
         asyncio.to_thread(draw_klines, klines_target_cycle_data, f"{inst_id}_15min_Candlestick_Chart"),
         asyncio.to_thread(draw_klines, klines_high_cycle_data, f"{inst_id}_1hour_Candlestick_Chart")
     )
+    
+    # 优化：使用完后显式释放 DataFrame 内存
+    del klines_target_cycle_data, klines_high_cycle_data
 
     auto_user_prompt = auto_trade_user_prompts.format(latest_klines_15min=last_10_str_target_cycle,
                                                       latest_klines_1h=last_10_str_high_cycle,
@@ -243,9 +250,9 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
 async def run_workflow():
     for coin_config in target_coins:
         inst_id = coin_config['inst_id']
-        leverage = coin_config['leverage']
-        ok_client.set_leverage(inst_id, leverage, TdMode.CROSS)
-        print(f"设置{inst_id}的合约杠杆为{leverage}倍")
+        # leverage = coin_config['leverage']
+        # ok_client.set_leverage(inst_id, leverage, TdMode.CROSS)
+        # print(f"设置{inst_id}的合约杠杆为{leverage}倍")
         ticket_factory.cancel_order(inst_id)
 
     await find_trade_chance()
