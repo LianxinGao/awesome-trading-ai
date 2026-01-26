@@ -4,12 +4,9 @@ matplotlib.use('Agg')  # 必须在导入 pyplot 之前设置后端，适用于�
 import matplotlib.pyplot as plt
 from ai.gemini_client import request_ai
 from filters import tech_filters
-from ai.models import AutoTradeResponse, MonitoringResponse, SaveOrderInfo, AutoTradeResponseV2
-from ai.auto_prompts_v2 import auto_trade_system_prompts, auto_trade_user_prompts, monitoring_user_prompts, \
-    monitoring_system_prompts
-from client.ok_models import TdMode
+from ai.models import AutoTradeResponseV2
+from ai.auto_prompts_v2 import auto_trade_system_prompts, auto_trade_user_prompts
 from visual.draw_klines import plot_candlestick
-from visual.prepare_draw_data import get_kline_with_ema
 import io
 from common import tg_tools, comon_utils
 import json
@@ -86,12 +83,14 @@ async def find_trade_chance():
 
     ai_tasks = []
     for coin in kline_results:
-        task = run_inst(coin['inst_id'], coin['klines_target_cycle'], coin['klines_high_cycle'],
-                        coin['precision'], coin['sz'])
+        task = asyncio.create_task(run_inst(coin['inst_id'], coin['klines_target_cycle'], coin['klines_high_cycle'],
+                                             coin['precision'], coin['sz']))
         ai_tasks.append(task)
-    ai_results = await asyncio.gather(*ai_tasks)
 
-    for result in ai_results:
+    # 流式处理：每个任务完成就立即处理结果
+    for coro in asyncio.as_completed(ai_tasks):
+        result = await coro
+        print(json.dumps(result, ensure_ascii=False, indent=4))
         action = result['action']
         inst_id = result['symbol']
         precision = result['precision']
@@ -119,7 +118,6 @@ async def find_trade_chance():
             continue
 
         print(f'{inst_id} 符合交易条件')
-        print(json.dumps(result, ensure_ascii=False, indent=4))
         ai_pos_side = 'long' if action == 'BUY' else 'short'
         ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
         if ok_ticket:
