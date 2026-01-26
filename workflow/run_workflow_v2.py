@@ -105,7 +105,6 @@ async def find_trade_chance():
             result = None
             try:
                 result = await coro
-                print(json.dumps(result, ensure_ascii=False, indent=4))
                 action = result['action']
                 inst_id = result['symbol']
                 precision = result['precision']
@@ -133,6 +132,7 @@ async def find_trade_chance():
                     continue
 
                 print(f'{inst_id} 符合交易条件')
+                print(json.dumps(result, ensure_ascii=False, indent=4))
                 ai_pos_side = 'long' if action == 'BUY' else 'short'
                 ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
                 if ok_ticket:
@@ -248,10 +248,43 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
         auto_result = await request_ai(auto_trade_system_prompts, auto_user_prompt,
                                        [image_bytes_target_cycle, image_bytes_high_cycle],
                                        AutoTradeResponseV2)
-        auto_result_dict = dict(auto_result)
-        auto_result_dict['symbol'] = inst_id
-        auto_result_dict['sz'] = sz
-        auto_result_dict['precision'] = precision
+        
+        # 检查 API 调用是否成功
+        if auto_result is None:
+            print(f"{inst_id} AI API 调用失败，返回默认响应")
+            # 返回一个默认的 WAIT 响应，避免程序崩溃
+            auto_result_dict = {
+                'action': 'WAIT',
+                'entry_price': '0',
+                'take_profit': '0',
+                'stop_loss': '0',
+                'entry_type': '市价委托',
+                'summary': 'AI API 调用失败',
+                'symbol': inst_id,
+                'sz': sz,
+                'precision': precision
+            }
+        else:
+            auto_result_dict = dict(auto_result)
+            auto_result_dict['symbol'] = inst_id
+            auto_result_dict['sz'] = sz
+            auto_result_dict['precision'] = precision
+    except Exception as e:
+        print(f"{inst_id} AI 调用发生未预期的错误: {e}")
+        import traceback
+        traceback.print_exc()
+        # 返回默认响应，确保程序继续运行
+        auto_result_dict = {
+            'action': 'WAIT',
+            'entry_price': '0',
+            'take_profit': '0',
+            'stop_loss': '0',
+            'entry_type': '市价委托',
+            'summary': f'AI 调用异常: {str(e)}',
+            'symbol': inst_id,
+            'sz': sz,
+            'precision': precision
+        }
     finally:
         # 释放图像字节数据内存
         del image_bytes_target_cycle, image_bytes_high_cycle
