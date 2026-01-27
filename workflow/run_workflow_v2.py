@@ -16,6 +16,8 @@ from factory import ticket_factory
 from exp.get_market_cycle import UltimateMarketClassifier
 from datetime import datetime
 
+TRADE_FEE = 0.0005
+coin_multi = {"BTC-USDT-SWAP": 0.01, "ETH-USDT-SWAP": 0.1, "BNB-USDT-SWAP": 0.01}
 
 classifier = UltimateMarketClassifier()
 
@@ -160,7 +162,7 @@ async def find_trade_chance():
                     print(f'{inst_id} 被atr_filter过滤')
                     continue
 
-                print(f'{inst_id} 符合交易条件')
+                print(f'{inst_id} 符合交易条件, 开始计算手续费')
                 ai_pos_side = 'long' if action == 'BUY' else 'short'
                 ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
                 if action == 'BUY':
@@ -171,6 +173,19 @@ async def find_trade_chance():
                     side = 'sell'
                     take_profit = str(round(take_profit * short_target_coef, precision))
                     stop_loss = str(round(stop_loss * short_stop_loss_coef, precision))
+
+                multi = coin_multi[inst_id]
+                open_fee = TRADE_FEE * multi * float(sz) * float(entry_price)
+                close_fee = TRADE_FEE * multi * float(sz) * float(take_profit)
+                total_fee = open_fee + close_fee
+
+                take_profit_value = (abs(float(take_profit) - float(entry_price))) * float(sz) * multi
+
+                if total_fee > take_profit_value:
+                    print(f'{inst_id} 手续费超过止盈价距离, 放弃')
+                    continue
+                print(f'{inst_id} 符合手续费条件, 开始下单')
+
                 if ok_ticket:
                     pos_side = ok_ticket[0].pos_side
                     if ai_pos_side != pos_side:
