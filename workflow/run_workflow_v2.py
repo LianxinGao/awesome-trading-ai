@@ -175,10 +175,10 @@ async def find_trade_chance():
                     side = 'sell'
                     take_profit = str(round(take_profit * short_target_coef, precision))
                     stop_loss = str(round(stop_loss * short_stop_loss_coef, precision))
-                if entry_type == '市价委托':
-                    ticket_factory.order_position(inst_id, side, sz, take_profit, stop_loss)
-                else:
-                    ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss)
+                # if entry_type == '市价委托':
+                #     ticket_factory.order_position(inst_id, side, sz, take_profit, stop_loss)
+                # else:
+                ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss)
 
                 end = str(datetime.now().replace(microsecond=0))
                 eval_result = ticket_factory.evaluate_trade(inst_id, evaluate_configs['begin'], end)
