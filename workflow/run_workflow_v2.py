@@ -127,6 +127,7 @@ async def find_trade_chance():
                 action = result['action']
                 inst_id = result['symbol']
                 precision = result['precision']
+                market_cycle_20 = result['market_cycle_20']
                 print(json.dumps(result, ensure_ascii=False, indent=4))
                 if action == 'WAIT':
                     print(f'{inst_id} 暂无交易机会')
@@ -136,9 +137,15 @@ async def find_trade_chance():
                 count = pattern_filter.get('count', 0)
                 has_conflict = pattern_filter.get('has_conflict', False)
                 direction_match = pattern_filter.get('direction_match', False)
-                if has_conflict or not direction_match or count == 0:
-                    print(f'{inst_id} 被pattern_filter过滤')
-                    continue
+
+                if market_cycle_20 == 'Trading Range':
+                    if count < 1:
+                        print(f'{inst_id} 被pattern_filter过滤')
+                        continue
+                else:
+                    if has_conflict or not direction_match or count == 0:
+                        print(f'{inst_id} 被pattern_filter过滤')
+                        continue
 
                 entry_price = float(result['entry_price'])
                 take_profit = float(result['take_profit'])
@@ -303,7 +310,8 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
                 'summary': 'AI API 调用失败',
                 'symbol': inst_id,
                 'sz': sz,
-                'precision': precision
+                'precision': precision,
+                'market_cycle_20': mode_target_20 # Trading Range
             }
         else:
             auto_result_dict = dict(auto_result)
@@ -324,7 +332,8 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
             'summary': f'AI 调用异常: {str(e)}',
             'symbol': inst_id,
             'sz': sz,
-            'precision': precision
+            'precision': precision,
+            'market_cycle_20': mode_target_20
         }
     finally:
         # 释放图像字节数据内存

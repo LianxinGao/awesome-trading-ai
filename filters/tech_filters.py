@@ -322,6 +322,15 @@ def filter_by_atr_distance(df:pd.DataFrame, window_size: int, entry_price: float
 
 
 if __name__ == '__main__':
-    test_date = datetime.strptime('2026-01-22 11:00:00', '%Y-%m-%d %H:%M:%S')
-    result = filter_by_patterns('SOL-USDT-SWAP', test_date, 15, 15, )
-    print(result)
+    import asyncio
+    from client import ok_client
+
+    inst_id = "BNB-USDT-SWAP"
+    interval = 15
+    klines_target_cycle = asyncio.run(ok_client.get_klines(inst_id, interval, 200, exclude_unconfirmed_bar=True))
+    print(klines_target_cycle.tail(10))
+    pattern_filter = filter_by_patterns(klines_target_cycle, 5, 'BUY')
+    print(pattern_filter)
+    # test_date = datetime.strptime('2026-01-22 11:00:00', '%Y-%m-%d %H:%M:%S')
+    # result = filter_by_patterns('SOL-USDT-SWAP', test_date, 15, 15, )
+    # print(result)
