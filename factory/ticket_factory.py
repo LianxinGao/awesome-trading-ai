@@ -12,13 +12,15 @@ def get_ticket_data()->list[Ticket]:
 
 def cancel_order(inst_id):
     order_id = get_pending_order_id(inst_id)
-    result = ok_client.cancel_order(inst_id, order_id)
-    print(result)
+    if order_id:
+        result = ok_client.cancel_order(inst_id, order_id)
+        print(result)
 
 def cancel_algo_order(inst_id):
     algo_order_id = ok_client.get_pending_algo_order_id(inst_id)
-    result = ok_client.cancel_algo_order(inst_id, algo_order_id)
-    print(result)
+    if algo_order_id:
+        result = ok_client.cancel_algo_order(inst_id, algo_order_id)
+        print(result)
 
 def get_pending_order_id(inst_id):
     order_id = ok_client.get_pending_order(inst_id)
