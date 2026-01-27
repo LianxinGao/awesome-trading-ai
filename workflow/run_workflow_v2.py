@@ -14,6 +14,8 @@ from coin_configs import target_coins, evaluate_configs
 from client import ok_client
 from factory import ticket_factory
 from exp.get_market_cycle import UltimateMarketClassifier
+from datetime import datetime
+
 
 classifier = UltimateMarketClassifier()
 
@@ -177,6 +179,19 @@ async def find_trade_chance():
                     ticket_factory.order_position(inst_id, side, sz, take_profit, stop_loss)
                 else:
                     ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss)
+
+                end = str(datetime.now().replace(microsecond=0))
+                eval_result = ticket_factory.evaluate_trade(inst_id, evaluate_configs['begin'], end)
+                auto_response_to_tg = json.dumps({
+                    'symbol': inst_id,
+                    'action': action,
+                    'entry': entry_price,
+                    'take_profit': take_profit,
+                    'stop_loss': stop_loss,
+                    'trading_history': eval_result
+                }, indent=2, ensure_ascii=False)
+                await tg_tools.tg_bot_http_post(auto_response_to_tg)
+
             except Exception as e:
                 print(f"处理任务结果时发生错误: {e}")
                 import traceback

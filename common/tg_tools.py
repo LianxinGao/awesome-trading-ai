@@ -40,4 +40,4 @@ async def tg_bot_http_post(message_text):
 
 if __name__ == '__main__':
     import asyncio
-    asyncio.run(tg_bot_http_post("ojbk, Mr Zhou!"))
+    asyncio.run(tg_bot_http_post("The next generation of AI trader is coming..."))
