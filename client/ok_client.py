@@ -211,6 +211,30 @@ def close_position(inst_id, mgn_mode: TdMode):
         return False
 
 
+def get_all_position_history(begin: str, end: str):
+    """
+    Args:
+        begin: "1754409600000"
+        end: "1754470800000"
+    """
+    tickets = []
+    results = accountAPI.get_positions_history(
+        before=begin,
+        after=end
+    )['data']
+    for result in results:
+        tickets.append(CompletedTicket(
+            inst_id=result["instId"],
+            direction=result['direction'],
+            open_avg_px=result["openAvgPx"],
+            close_avg_px=result["closeAvgPx"],
+            pnl=result["pnl"],
+            fee=result["fee"],
+            realized_pnl=result["realizedPnl"],
+            completed_time=get_date(int(result["uTime"]))
+        ))
+    return tickets
+
 def get_position_history(inst_id: str, begin: str, end: str):
     """
     Args:

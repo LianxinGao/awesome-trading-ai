@@ -58,11 +58,11 @@ def cancel_algo_order(inst_id):
         result = ok_client.cancel_algo_order(inst_id, algo_order_id)
     return result
 
-def evaluate_trade(inst_id, begin, end):
+def evaluate_trade(begin, end):
     begin = str(get_timestamp(begin))
     end = str(get_timestamp(end))
 
-    completed_tickets = ok_client.get_position_history(inst_id, begin, end)
+    completed_tickets = ok_client.get_all_position_history(begin, end)
     total_trade = 0
     win_trade = 0
     unrealized_pnl = 0
@@ -94,9 +94,9 @@ if __name__ == '__main__':
     # print(res)
     # result = cancel_algo_order(inst_id)
     # print(result)
-    res = get_ticket_data()
-    print(res)
-    eval_result = evaluate_trade("BTC-USDT-SWAP", "2026-01-03 13:35:00", end = str(datetime.now().replace(microsecond=0)))
+    # res = get_ticket_data()
+    # print(res)
+    eval_result = evaluate_trade("2026-01-27 17:33:00", end = str(datetime.now().replace(microsecond=0)))
     print(eval_result)
     # res = order_position(inst_id, "buy", sz, 2.87, 2.86)
     # print(res)
