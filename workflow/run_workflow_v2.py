@@ -165,18 +165,18 @@ async def find_trade_chance():
                     pos_side = ok_ticket[0].pos_side
                     if ai_pos_side != pos_side:
                         ticket_factory.close_position(inst_id)
-                        if action == 'BUY':
-                            side = 'buy'
-                            take_profit = str(round(take_profit * long_target_coef, precision))
-                            stop_loss = str(round(stop_loss * long_stop_loss_coef, precision))
-                        else:
-                            side = 'sell'
-                            take_profit = str(round(take_profit * short_target_coef, precision))
-                            stop_loss = str(round(stop_loss * short_stop_loss_coef, precision))
-                        if entry_type == '市价委托':
-                            ticket_factory.order_position(inst_id, side, sz, take_profit, stop_loss)
-                        else:
-                            ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss)
+                if action == 'BUY':
+                    side = 'buy'
+                    take_profit = str(round(take_profit * long_target_coef, precision))
+                    stop_loss = str(round(stop_loss * long_stop_loss_coef, precision))
+                else:
+                    side = 'sell'
+                    take_profit = str(round(take_profit * short_target_coef, precision))
+                    stop_loss = str(round(stop_loss * short_stop_loss_coef, precision))
+                if entry_type == '市价委托':
+                    ticket_factory.order_position(inst_id, side, sz, take_profit, stop_loss)
+                else:
+                    ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss)
             except Exception as e:
                 print(f"处理任务结果时发生错误: {e}")
                 import traceback
