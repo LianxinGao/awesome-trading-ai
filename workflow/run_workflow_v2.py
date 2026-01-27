@@ -155,7 +155,7 @@ async def find_trade_chance():
                 entry_type = result['entry_type']
                 sz = result['sz']
 
-                atr_filter = tech_filters.filter_by_atr_distance(coin_target_cycle, 20, entry_price, take_profit, 1)
+                atr_filter = tech_filters.filter_by_atr_distance(coin_target_cycle, 20, entry_price, take_profit, 1.2)
                 if not atr_filter.get('passed', False):
                     print(f'{inst_id} 被atr_filter过滤')
                     continue
