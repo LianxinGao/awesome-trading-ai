@@ -318,6 +318,7 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
             auto_result_dict['symbol'] = inst_id
             auto_result_dict['sz'] = sz
             auto_result_dict['precision'] = precision
+            auto_result_dict['market_cycle_20'] = mode_target_20
     except Exception as e:
         print(f"{inst_id} AI 调用发生未预期的错误: {e}")
         import traceback
