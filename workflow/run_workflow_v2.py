@@ -163,10 +163,6 @@ async def find_trade_chance():
                 print(f'{inst_id} 符合交易条件')
                 ai_pos_side = 'long' if action == 'BUY' else 'short'
                 ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
-                if ok_ticket:
-                    pos_side = ok_ticket[0].pos_side
-                    if ai_pos_side != pos_side:
-                        ticket_factory.close_position(inst_id)
                 if action == 'BUY':
                     side = 'buy'
                     take_profit = str(round(take_profit * long_target_coef, precision))
@@ -175,22 +171,38 @@ async def find_trade_chance():
                     side = 'sell'
                     take_profit = str(round(take_profit * short_target_coef, precision))
                     stop_loss = str(round(stop_loss * short_stop_loss_coef, precision))
-                # if entry_type == '市价委托':
-                #     ticket_factory.order_position(inst_id, side, sz, take_profit, stop_loss)
-                # else:
-                ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss)
+                if ok_ticket:
+                    pos_side = ok_ticket[0].pos_side
+                    if ai_pos_side != pos_side:
+                        ticket_factory.close_position(inst_id)
+                        ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss)
+                        end = str(datetime.now().replace(microsecond=0))
+                        eval_result = ticket_factory.evaluate_trade(inst_id, evaluate_configs['begin'], end)
+                        auto_response_to_tg = json.dumps({
+                            'symbol': inst_id,
+                            'action': action,
+                            'entry': entry_price,
+                            'take_profit': take_profit,
+                            'stop_loss': stop_loss,
+                            'trading_history': eval_result
+                        }, indent=2, ensure_ascii=False)
+                        await tg_tools.tg_bot_http_post(auto_response_to_tg)
+                    else:
+                        print(f'{inst_id} 仓位已存在，继续持有')
+                else:
+                    ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss)
 
-                end = str(datetime.now().replace(microsecond=0))
-                eval_result = ticket_factory.evaluate_trade(inst_id, evaluate_configs['begin'], end)
-                auto_response_to_tg = json.dumps({
-                    'symbol': inst_id,
-                    'action': action,
-                    'entry': entry_price,
-                    'take_profit': take_profit,
-                    'stop_loss': stop_loss,
-                    'trading_history': eval_result
-                }, indent=2, ensure_ascii=False)
-                await tg_tools.tg_bot_http_post(auto_response_to_tg)
+                    end = str(datetime.now().replace(microsecond=0))
+                    eval_result = ticket_factory.evaluate_trade(inst_id, evaluate_configs['begin'], end)
+                    auto_response_to_tg = json.dumps({
+                        'symbol': inst_id,
+                        'action': action,
+                        'entry': entry_price,
+                        'take_profit': take_profit,
+                        'stop_loss': stop_loss,
+                        'trading_history': eval_result
+                    }, indent=2, ensure_ascii=False)
+                    await tg_tools.tg_bot_http_post(auto_response_to_tg)
 
             except Exception as e:
                 print(f"处理任务结果时发生错误: {e}")

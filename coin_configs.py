@@ -9,5 +9,5 @@ target_coins = [
 
 
 evaluate_configs = {
-    "begin": "2026-01-27 17:00:00"
+    "begin": "2026-01-27 17:33:00"
 }
