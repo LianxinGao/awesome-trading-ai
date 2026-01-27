@@ -15,6 +15,11 @@ def cancel_order(inst_id):
     result = ok_client.cancel_order(inst_id, order_id)
     print(result)
 
+def cancel_algo_order(inst_id):
+    algo_order_id = ok_client.get_pending_algo_order_id(inst_id)
+    result = ok_client.cancel_algo_order(inst_id, algo_order_id)
+    print(result)
+
 def get_pending_order_id(inst_id):
     order_id = ok_client.get_pending_order(inst_id)
     return order_id
@@ -49,13 +54,6 @@ def order_position(inst_id, side, sz, tp_trigger_px, sl_trigger_px, entry_price 
 
 def order_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px):
     result = ok_client.place_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px)
-    return result
-
-def cancel_algo_order(inst_id):
-    algo_order_id = ok_client.get_pending_algo_order_id()
-    result = ''
-    if algo_order_id:
-        result = ok_client.cancel_algo_order(inst_id, algo_order_id)
     return result
 
 def evaluate_trade(begin, end):

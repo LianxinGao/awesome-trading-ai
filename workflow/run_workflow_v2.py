@@ -411,7 +411,7 @@ async def run_workflow():
             # leverage = coin_config['leverage']
             # ok_client.set_leverage(inst_id, leverage, TdMode.CROSS)
             # print(f"设置{inst_id}的合约杠杆为{leverage}倍")
-            ticket_factory.cancel_order(inst_id)
+            ticket_factory.cancel_algo_order(inst_id)
 
         await find_trade_chance()
     finally:

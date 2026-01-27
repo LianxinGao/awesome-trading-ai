@@ -161,8 +161,10 @@ def modify_algo_order(inst_id: str, algo_id: str, tp_trigger_px, sl_trigger_px):
     print(result)
 
 
-def get_pending_algo_order_id():
+def get_pending_algo_order_id(inst_id):
     results = tradeAPI.order_algos_list(
+        instId=inst_id,
+        instType='SWAP',
         ordType="trigger"
     )
     # algo_id = results['data'][0]['algoId']

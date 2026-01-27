@@ -36,7 +36,7 @@ class TradingScheduler:
         )
         
         # 下次运行时间 = 当前周期开始时间 + x分
-        next_run = current_cycle_start + timedelta(minutes=self.time_interval, seconds=5)
+        next_run = current_cycle_start + timedelta(minutes=self.time_interval, seconds=2)
         
         # 如果已经过了这个时间，则计算下一个x分钟周期
         if next_run <= now:
