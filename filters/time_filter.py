@@ -50,7 +50,7 @@ def is_pre_market_time():
         # 盘前半小时：21:00-21:30 返回True
         if current_hour == 21:
             # 21:00-21:30 在盘前半小时
-            return current_minute < 30
+            return current_minute < 35
         else:
             return False
     else:
@@ -58,7 +58,7 @@ def is_pre_market_time():
         # 盘前半小时：22:00-22:30 返回True
         if current_hour == 22:
             # 22:00-22:30 在盘前半小时
-            return current_minute < 30
+            return current_minute < 35
         else:
             return False
 
