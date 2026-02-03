@@ -430,9 +430,9 @@ async def run_workflow():
             # print(f"设置{inst_id}的合约杠杆为{leverage}倍")
             ticket_factory.cancel_algo_order(inst_id)
 
-        is_in_high_volatility_time = time_filter.is_market_open_time()
-        if is_in_high_volatility_time:
-            print(f'{datetime.now()} 在美股开盘半小时前后，不进行交易')
+        is_pre_market_time = time_filter.is_pre_market_time()
+        if is_pre_market_time:
+            print(f'{datetime.now()} 在美股开盘前半小时，不进行交易')
             return
         await find_trade_chance()
     finally:
