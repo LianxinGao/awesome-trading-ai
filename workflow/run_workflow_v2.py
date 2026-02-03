@@ -15,6 +15,8 @@ from client import ok_client
 from factory import ticket_factory
 from exp.get_market_cycle import UltimateMarketClassifier
 from datetime import datetime
+from filters import time_filter
+
 
 TRADE_FEE = 0.0005
 coin_multi = {"BTC-USDT-SWAP": 0.01, "ETH-USDT-SWAP": 0.1, "BNB-USDT-SWAP": 0.01}
@@ -428,6 +430,10 @@ async def run_workflow():
             # print(f"设置{inst_id}的合约杠杆为{leverage}倍")
             ticket_factory.cancel_algo_order(inst_id)
 
+        is_in_high_volatility_time = time_filter.is_market_open_time()
+        if is_in_high_volatility_time:
+            print(f'{datetime.now()} 在美股开盘半小时前后，不进行交易')
+            return
         await find_trade_chance()
     finally:
         # 每次工作流执行完后强制垃圾回收，防止内存累积

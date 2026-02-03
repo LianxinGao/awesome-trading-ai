@@ -67,7 +67,7 @@ auto_trade_system_prompts = dedent("""\
   
 # 输出格式 
 请输出纯JSON格式，包含以下字段：
-1. "entry_reason": 入场逻辑
+1. "summary": 综合决策理由(在分析中不允许提及具体K线的编号)
 2. "action": "BUY / SELL / WAIT",
 3. "entry_type": "计划委托/市价委托",
 4. "entry_price": "具体的数值",
