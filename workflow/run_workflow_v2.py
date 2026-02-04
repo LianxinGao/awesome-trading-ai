@@ -19,7 +19,7 @@ from filters import time_filter
 
 
 TRADE_FEE = 0.0005
-coin_multi = {"BTC-USDT-SWAP": 0.01, "ETH-USDT-SWAP": 0.1, "BNB-USDT-SWAP": 0.01}
+coin_multi = {"BTC-USDT-SWAP": 0.01, "ETH-USDT-SWAP": 0.1, "SOL-USDT-SWAP": 1}
 
 classifier = UltimateMarketClassifier()
 
