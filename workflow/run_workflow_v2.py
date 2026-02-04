@@ -159,6 +159,9 @@ async def find_trade_chance():
                 entry_type = result['entry_type']
                 sz = result['sz']
 
+                print(f'AI给到的止盈价：{take_profit}')
+                print(f'AI给到的止损价：{stop_loss}')
+
                 atr_filter = tech_filters.filter_by_atr_distance(coin_target_cycle, 20, entry_price, take_profit, 1.5)
                 if not atr_filter.get('passed', False):
                     print(f'{inst_id} 被atr_filter过滤')
@@ -175,6 +178,9 @@ async def find_trade_chance():
                     side = 'sell'
                     take_profit = str(round(take_profit * short_target_coef, precision))
                     stop_loss = str(round(stop_loss * short_stop_loss_coef, precision))
+
+                print(f'调整后的止盈价：{take_profit}')
+                print(f'调整后的止损价：{stop_loss}')
 
                 multi = coin_multi[inst_id]
                 open_fee = TRADE_FEE * multi * float(sz) * float(entry_price)
