@@ -26,8 +26,8 @@ def get_pending_order_id(inst_id):
     order_id = ok_client.get_pending_order(inst_id)
     return order_id
 
-def close_position(inst_id):
-    result = ok_client.close_position(inst_id, ok_client.TdMode.CROSS)
+def close_position(inst_id, pos_side):
+    result = ok_client.close_position(inst_id, ok_client.TdMode.CROSS, pos_side)
     print(result)
 
 def order_position(inst_id, side, sz, tp_trigger_px, sl_trigger_px, entry_price = ""):
@@ -54,8 +54,8 @@ def order_position(inst_id, side, sz, tp_trigger_px, sl_trigger_px, entry_price 
         )
     return result
 
-def order_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px):
-    result = ok_client.place_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px)
+def order_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px, pos_side):
+    result = ok_client.place_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px, pos_side)
     return result
 
 def evaluate_trade(begin, end):

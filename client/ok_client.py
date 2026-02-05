@@ -126,7 +126,7 @@ def place_order(order_type: OrderType, inst_id, side: str, sz: str,
 
 
 # 计划委托
-def place_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px):
+def place_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px, pos_side):
     result = tradeAPI.place_algo_order(
         instId=inst_id,
         tdMode='cross',
@@ -144,7 +144,8 @@ def place_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px
                 "slTriggerPx": sl_trigger_px,
                 "slOrdPx": "-1",
             }
-        ]
+        ],
+        posSide=pos_side
     )
     return result
 
@@ -201,11 +202,12 @@ def get_pending_order(inst_id: str):
         return ""
 
 
-def close_position(inst_id, mgn_mode: TdMode):
+def close_position(inst_id, mgn_mode: TdMode, pos_side):
     result = tradeAPI.close_positions(
         instId=inst_id,
         mgnMode=mgn_mode.value,
-        autoCxl="true"
+        autoCxl="true",
+        posSide=pos_side
     )
     if result and result["code"] == "0":
         return True
@@ -263,11 +265,12 @@ def get_position_history(inst_id: str, begin: str, end: str):
     return tickets
 
 
-def set_leverage(inst_id: str, lever: str, mgn_mode: TdMode):
+def set_leverage(inst_id: str, lever: str, mgn_mode: TdMode, pos_side):
     result = accountAPI.set_leverage(
         instId=inst_id,
         lever=lever,
-        mgnMode=mgn_mode.value
+        mgnMode=mgn_mode.value,
+        posSide=pos_side
     )
 
     if result and result.get("code") == "0":
@@ -567,12 +570,18 @@ async def get_account_balance():
     return round(float(available_usdt), 2)
 
 
+def set_position_mode(pos_mode):
+    # long_short_mode, net_mode
+    result = accountAPI.set_position_mode(pos_mode)
+    return result
+
+
 if __name__ == '__main__':
     import asyncio
     # result = asyncio.run(get_klines_end_with_specify_time("BTC-USDT-SWAP", "2026-01-09 22:35:01", 5, 200,True))
     # print(result.tail())
-    # res = get_position()
-    # print(res)
+    res = get_position()
+    print(res)
     # res = get_position_history("SOL-USDT-SWAP", "", "")
     # print(res[:3])
     # res = asyncio.run(get_top_trader_account_ratio("DOGE-USDT-SWAP", "15m"))
