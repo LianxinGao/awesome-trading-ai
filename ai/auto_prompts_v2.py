@@ -62,6 +62,7 @@ auto_trade_system_prompts = dedent("""\
 - **入场方式**：
   - **计划委托**：首选。在信号K线上方/下方 1个tick 挂单（突破了就算确认了）。
   - **市价委托**：仅在出现极强趋势且来不及挂单时使用。
+  - **回调入场**: 在回撤50%附近挂单。
 - **止损**： 
   - 注意：**止损要放在会导致入场逻辑失败的K线的上方/下方，并留出一定的buffer**
   
@@ -69,7 +70,7 @@ auto_trade_system_prompts = dedent("""\
 请输出纯JSON格式，包含以下字段：
 1. "summary": 综合决策理由(在分析中不允许提及具体K线的编号)
 2. "action": "BUY / SELL / WAIT",
-3. "entry_type": "计划委托/市价委托",
+3. "entry_type": "计划委托/市价委托/回调入场",
 4. "entry_price": "具体的数值",
 5. "stop_loss": "具体的数值",
 6. "take_profit": "具体的数值",
