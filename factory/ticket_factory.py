@@ -59,6 +59,7 @@ def order_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px
     return result
 
 def evaluate_trade(begin, end):
+    timestamp = begin
     begin = str(get_timestamp(begin))
     end = str(get_timestamp(end))
 
@@ -84,7 +85,8 @@ def evaluate_trade(begin, end):
         "总胜数": win_trade,
         "总胜率": f"{win_rate:.2%}" if total_trade > 0 else "0.00%",
         "总盈亏": f"{realized_pnl:.2f} USDT",
-        "平均每笔盈亏": f"{avg_pnl:.2f} USDT"
+        "平均每笔盈亏": f"{avg_pnl:.2f} USDT",
+        "开始时间": timestamp,
         }
     return json_data
 

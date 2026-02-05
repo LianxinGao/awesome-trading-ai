@@ -200,7 +200,7 @@ async def find_trade_chance():
                         ticket_factory.close_position(inst_id)
                         ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss)
                         end = str(datetime.now().replace(microsecond=0))
-                        eval_result = ticket_factory.evaluate_trade(inst_id, evaluate_configs['begin'], end)
+                        eval_result = ticket_factory.evaluate_trade(evaluate_configs['begin'], end)
                         auto_response_to_tg = json.dumps({
                             'symbol': inst_id,
                             'action': action,
