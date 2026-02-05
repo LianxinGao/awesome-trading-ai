@@ -172,12 +172,10 @@ async def find_trade_chance():
                 ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
                 if action == 'BUY':
                     side = 'buy'
-                    current_pos_side = 'long'
                     take_profit = str(round(take_profit * long_target_coef, precision))
                     stop_loss = str(round(stop_loss * long_stop_loss_coef, precision))
                 else:
                     side = 'sell'
-                    current_pos_side = 'short'
                     take_profit = str(round(take_profit * short_target_coef, precision))
                     stop_loss = str(round(stop_loss * short_stop_loss_coef, precision))
 
@@ -215,7 +213,7 @@ async def find_trade_chance():
                     else:
                         print(f'{inst_id} 仓位已存在，继续持有')
                 else:
-                    ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss, current_pos_side)
+                    ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss, ai_pos_side)
 
                     end = str(datetime.now().replace(microsecond=0))
                     eval_result = ticket_factory.evaluate_trade(evaluate_configs['begin'], end)
