@@ -105,7 +105,6 @@ def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=N
 
 
 async def find_trade_chance():
-    tickets = ticket_factory.get_ticket_data()
     kline_tasks = []
     for coin in target_coins:
         task = _get_klines(coin['inst_id'], coin['intervals'], coin['limit'], coin['precision'], coin['sz'])
@@ -169,7 +168,9 @@ async def find_trade_chance():
 
                 print(f'{inst_id} 符合交易条件, 开始计算手续费')
                 ai_pos_side = 'long' if action == 'BUY' else 'short'
-                ok_ticket = [ticket for ticket in tickets if ticket.inst_id == inst_id]
+                # 实时获取最新仓位数据，避免使用函数开始时获取的旧数据导致重复开单
+                current_tickets = ticket_factory.get_ticket_data()
+                ok_ticket = [ticket for ticket in current_tickets if ticket.inst_id == inst_id]
                 if action == 'BUY':
                     side = 'buy'
                     take_profit = str(round(take_profit * long_target_coef, precision))
