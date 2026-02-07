@@ -157,6 +157,7 @@ async def find_trade_chance():
                 take_profit = float(result['take_profit'])
                 stop_loss = float(result['stop_loss'])
                 entry_type = result['entry_type']
+                summary = result['summary']
                 sz = result['sz']
 
                 print(f'AI给到的止盈价：{take_profit}')
@@ -203,6 +204,7 @@ async def find_trade_chance():
                         eval_result = ticket_factory.evaluate_trade(evaluate_configs['begin'], end)
                         auto_response_to_tg = json.dumps({
                             'symbol': inst_id,
+                            'summary': summary,
                             'action': action,
                             'entry': entry_price,
                             'take_profit': take_profit,
@@ -219,6 +221,7 @@ async def find_trade_chance():
                     eval_result = ticket_factory.evaluate_trade(evaluate_configs['begin'], end)
                     auto_response_to_tg = json.dumps({
                         'symbol': inst_id,
+                        'summary': summary,
                         'action': action,
                         'entry': entry_price,
                         'take_profit': take_profit,
