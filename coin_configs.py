@@ -6,6 +6,7 @@ target_coins = [
     # {"inst_id": "BNB-USDT-SWAP", "intervals": [15, 60], "limit": 200, "precision": 4, 'sz': 5, 'leverage': '50'},
 ]
 
+USDT_MAX_LOSE_PER_TRADE = 2
 
 
 evaluate_configs = {

@@ -16,7 +16,8 @@ from factory import ticket_factory
 from exp.get_market_cycle import UltimateMarketClassifier
 from datetime import datetime
 from filters import time_filter
-
+from tools import position_calculator
+from coin_configs import USDT_MAX_LOSE_PER_TRADE
 
 TRADE_FEE = 0.0005
 coin_multi = {"BTC-USDT-SWAP": 0.01, "ETH-USDT-SWAP": 0.1, "SOL-USDT-SWAP": 1}
@@ -142,7 +143,7 @@ async def find_trade_chance():
                 count = pattern_filter.get('count', 0)
                 has_conflict = pattern_filter.get('has_conflict', False)
                 direction_match = pattern_filter.get('direction_match', False)
-
+                print(pattern_filter)
                 if market_cycle_20 == 'Trading Range':
                     if count < 1:
                         print(f'{inst_id} 被pattern_filter过滤')
@@ -162,6 +163,7 @@ async def find_trade_chance():
                 print(f'AI给到的止损价：{stop_loss}')
 
                 atr_filter = tech_filters.filter_by_atr_distance(coin_target_cycle, 20, entry_price, take_profit, 1.5)
+                print(atr_filter)
                 if not atr_filter.get('passed', False):
                     print(f'{inst_id} 被atr_filter过滤')
                     continue
@@ -180,15 +182,12 @@ async def find_trade_chance():
                     take_profit = str(round(take_profit * short_target_coef, precision))
                     stop_loss = str(round(stop_loss * short_stop_loss_coef, precision))
 
+
                 print(f'调整后的止盈价：{take_profit}')
                 print(f'调整后的止损价：{stop_loss}')
 
-                multi = coin_multi[inst_id]
-                open_fee = TRADE_FEE * multi * float(sz) * float(entry_price)
-                close_fee = TRADE_FEE * multi * float(sz) * float(take_profit)
+                open_fee, close_fee, take_profit_value, sz, _, _ = await position_calculator.cal_trade_fee_and_profit_and_sz(inst_id, USDT_MAX_LOSE_PER_TRADE, float(entry_price), float(take_profit), float(stop_loss))
                 total_fee = open_fee + close_fee
-
-                take_profit_value = (abs(float(take_profit) - float(entry_price))) * float(sz) * multi
 
                 if total_fee > take_profit_value:
                     print(f'{inst_id} 手续费超过止盈价距离, 放弃')

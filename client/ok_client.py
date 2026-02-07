@@ -125,6 +125,35 @@ def place_order(order_type: OrderType, inst_id, side: str, sz: str,
     return result
 
 
+# 合约信息缓存（常用币种）
+inst_contract_info_cache = {
+    "BTC-USDT-SWAP": (0.01, 1, 0.01),
+    "ETH-USDT-SWAP": (0.1, 1, 0.01),
+    "SOL-USDT-SWAP": (1, 1, 0.01),
+    "XRP-USDT-SWAP": (100, 1, 0.01),
+    'BNB-USDT-SWAP': (0.01, 1, 1),
+}
+
+
+async def get_swap_contract_info_local(inst_id: str):
+    """
+    获取合约信息（本地缓存版）
+
+    Args:
+        inst_id: 交易对 ID
+
+    Returns:
+        tuple: (ct_val, ct_multi, min_sz)
+    """
+    info = inst_contract_info_cache.get(inst_id)
+    if info:
+        return info
+    else:
+        # 如果缓存中没有，返回默认值或抛出异常
+        # 在生产环境中，可以调用 OKX API 获取
+        raise ValueError(f"未找到合约信息: {inst_id}，请添加到缓存中")
+
+
 # 计划委托
 def place_algo_order(inst_id, side, sz, trigger_px, tp_trigger_px, sl_trigger_px, pos_side):
     result = tradeAPI.place_algo_order(
