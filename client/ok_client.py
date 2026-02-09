@@ -523,7 +523,7 @@ def get_position():
     for i in result:
         pos_id = i["posId"]
         inst_id = i["instId"]
-        pos_side = "short" if float(i["pos"]) < 0 else "long"
+        pos_side = i['posSide']
         avg_px = (i["avgPx"])
         liq_px = i["liqPx"]
         upl = str(round(float(i["upl"]), 2))
