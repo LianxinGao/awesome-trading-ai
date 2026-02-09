@@ -42,10 +42,10 @@ def get_thread_semaphore():
     return _thread_semaphore
 
 # 价格调整系数
-long_target_coef = 0.998  # 做多止盈系数 (稍微调低，更容易成交)
-short_target_coef = 1.002  # 做空止盈系数 (稍微调高，更容易成交)
-long_stop_loss_coef = 0.995  # 做多止损系数 (稍微调低，增加容错)
-short_stop_loss_coef = 1.005  # 做空止损系数 (稍微调高，增加容错)
+long_target_coef = 1  # 做多止盈系数 (稍微调低，更容易成交)
+short_target_coef = 1  # 做空止盈系数 (稍微调高，更容易成交)
+long_stop_loss_coef = 0.996  # 做多止损系数 (稍微调低，增加容错)
+short_stop_loss_coef = 1.004  # 做空止损系数 (稍微调高，增加容错)
 
 
 def get_last_10_rows(df):
@@ -206,7 +206,8 @@ async def find_trade_chance():
                     pos_side = ok_ticket[0].pos_side
                     if ai_pos_side != pos_side:
                         ticket_factory.close_position(inst_id, pos_side)
-                        ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss, ai_pos_side)
+                        order_result = ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss, ai_pos_side)
+                        print(order_result)
                         end = str(datetime.now().replace(microsecond=0))
                         eval_result = ticket_factory.evaluate_trade(evaluate_configs['begin'], end)
                         auto_response_to_tg = json.dumps({
@@ -222,8 +223,8 @@ async def find_trade_chance():
                     else:
                         print(f'{inst_id} 仓位已存在，继续持有')
                 else:
-                    ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss, ai_pos_side)
-
+                    order_result = ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss, ai_pos_side)
+                    print(order_result)
                     end = str(datetime.now().replace(microsecond=0))
                     eval_result = ticket_factory.evaluate_trade(evaluate_configs['begin'], end)
                     auto_response_to_tg = json.dumps({
