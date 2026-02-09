@@ -206,22 +206,23 @@ async def find_trade_chance():
                     pos_side = ok_ticket[0].pos_side
                     if ai_pos_side != pos_side:
                         ticket_factory.close_position(inst_id, pos_side)
-                        order_result = ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss, ai_pos_side)
-                        print(order_result)
-                        end = str(datetime.now().replace(microsecond=0))
-                        eval_result = ticket_factory.evaluate_trade(evaluate_configs['begin'], end)
-                        auto_response_to_tg = json.dumps({
-                            'symbol': inst_id,
-                            'summary': summary,
-                            'action': action,
-                            'entry': entry_price,
-                            'take_profit': take_profit,
-                            'stop_loss': stop_loss,
-                            'trading_history': eval_result
-                        }, indent=2, ensure_ascii=False)
-                        await tg_tools.tg_bot_http_post(auto_response_to_tg)
-                    else:
-                        print(f'{inst_id} 仓位已存在，继续持有')
+
+                    order_result = ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss, ai_pos_side)
+                    print(order_result)
+                    end = str(datetime.now().replace(microsecond=0))
+                    eval_result = ticket_factory.evaluate_trade(evaluate_configs['begin'], end)
+                    auto_response_to_tg = json.dumps({
+                        'symbol': inst_id,
+                        'summary': summary,
+                        'action': action,
+                        'entry': entry_price,
+                        'take_profit': take_profit,
+                        'stop_loss': stop_loss,
+                        'trading_history': eval_result
+                    }, indent=2, ensure_ascii=False)
+                    await tg_tools.tg_bot_http_post(auto_response_to_tg)
+                    # else:
+                    #     print(f'{inst_id} 仓位已存在，继续持有')
                 else:
                     order_result = ticket_factory.order_algo_order(inst_id, side, sz, str(entry_price), take_profit, stop_loss, ai_pos_side)
                     print(order_result)
