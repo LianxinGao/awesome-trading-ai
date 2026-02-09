@@ -321,6 +321,44 @@ def filter_by_atr_distance(df:pd.DataFrame, window_size: int, entry_price: float
         }
 
 
+def filter_by_pl_ratio(entry_price: float, take_profit_price: float, stop_loss_price: float, ratio_left: float, ratio_right: float):
+    """
+    判断盈亏比是否大于给定的 ratio
+    盈亏比 = |止盈价 - 入场价| / |入场价 - 止损价|
+    """
+    try:
+        profit = abs(take_profit_price - entry_price)
+        loss = abs(entry_price - stop_loss_price)
+
+        if loss == 0:
+            return {
+                'passed': False,
+                'pl_ratio': 0.0,
+                'profit': profit,
+                'loss': loss,
+                'error': '止损价与入场价相同，无法计算盈亏比'
+            }
+
+        pl_ratio = profit / loss
+        passed = ratio_left <= pl_ratio < ratio_right
+
+        return {
+            'passed': passed,
+            'pl_ratio': pl_ratio,
+            'profit': profit,
+            'loss': loss
+        }
+    except Exception as e:
+        traceback.print_exc()
+        return {
+            'passed': False,
+            'pl_ratio': 0.0,
+            'profit': 0.0,
+            'loss': 0.0,
+            'error': str(e)
+        }
+
+
 if __name__ == '__main__':
     import asyncio
     from client import ok_client

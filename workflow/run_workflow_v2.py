@@ -139,12 +139,13 @@ async def find_trade_chance():
                     print(f'{inst_id} 暂无交易机会')
                     continue
                 coin_target_cycle = kline_results_dict[inst_id]['klines_target_cycle']
+
                 pattern_filter = tech_filters.filter_by_patterns(coin_target_cycle, 5, action)
                 count = pattern_filter.get('count', 0)
                 has_conflict = pattern_filter.get('has_conflict', False)
                 direction_match = pattern_filter.get('direction_match', False)
                 print(pattern_filter)
-                if market_cycle_20 == 'Trading Range':
+                if market_cycle_20 in ['Trading Range', 'Broad Channel (Bull)', 'Broad Channel (Bear)']:
                     if count < 1:
                         print(f'{inst_id} 被pattern_filter过滤')
                         continue
@@ -167,6 +168,12 @@ async def find_trade_chance():
                 print(atr_filter)
                 if not atr_filter.get('passed', False):
                     print(f'{inst_id} 被atr_filter过滤')
+                    continue
+
+                pl_filter = tech_filters.filter_by_pl_ratio(entry_price, take_profit, stop_loss, 1, 2.5)
+                print(pl_filter)
+                if not pl_filter.get('passed', False):
+                    print(f'{inst_id} 被pl_filter过滤')
                     continue
 
                 print(f'{inst_id} 符合交易条件, 开始计算手续费')
