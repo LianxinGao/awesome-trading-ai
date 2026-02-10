@@ -328,25 +328,146 @@ def plot_candlestick(data, title="Candlestick Chart", figsize=(35, 18), markers=
     return fig, ax
 
 
+def plot_recent_klines(data, window=20, title="Recent Candlestick Chart", figsize=(15, 8)):
+    """
+    绘制最近指定数量的K线图（只包含K线和EMA21）
+    
+    Args:
+        data: 包含timestamp, open, high, low, close, ema21列的DataFrame
+        window: 绘制最近K线的数量
+        title: 图表标题
+        figsize: 图表大小
+    """
+    # 获取最后 window 根 K 线
+    data = data.tail(window).copy()
+    
+    # 确保数据按时间排序
+    data['timestamp'] = pd.to_datetime(data['timestamp'])
+    data = data.sort_values('timestamp')
+    
+    # 转换价格列为数值类型
+    for col in ['open', 'high', 'low', 'close', 'ema21']:
+        if col in data.columns:
+            data[col] = pd.to_numeric(data[col], errors='coerce')
+    
+    fig, ax = plt.subplots(figsize=figsize)
+    
+    # 计算价格范围用于调整显示
+    all_prices = np.concatenate([data['high'].values, data['low'].values])
+    if 'ema21' in data.columns and not data['ema21'].isna().all():
+        all_prices = np.concatenate([all_prices, data['ema21'].dropna().values])
+    
+    price_range = max(all_prices) - min(all_prices)
+    top_buffer = price_range * 0.05
+    bottom_buffer = price_range * 0.05
+    
+    # 计算每个蜡烛图的宽度
+    if len(data) > 1:
+        time_diff = (mdates.date2num(data.iloc[-1]['timestamp']) - mdates.date2num(data.iloc[0]['timestamp'])) / len(data)
+        width = max(time_diff * 0.7, 0.0006)
+    else:
+        width = 0.0015
+    
+    # 绘制蜡烛图
+    for i in range(len(data)):
+        row = data.iloc[i]
+        timestamp = mdates.date2num(row['timestamp'])
+        open_price = row['open']
+        high_price = row['high']
+        low_price = row['low']
+        close_price = row['close']
+        
+        is_up = close_price >= open_price
+        color = '#1f77b4' if is_up else '#d62728'  # 蓝色表示上涨，红色表示下跌
+        
+        # 绘制影线（高低价）- 分成两部分，避开实体
+        # 上影线（从实体顶部到最高价）
+        top_wick_start = max(open_price, close_price)  # 实体顶部
+        if high_price > top_wick_start:
+            ax.plot([timestamp, timestamp], [top_wick_start, high_price], 
+                    color=color, linewidth=1.2, alpha=0.7, zorder=1)
+        
+        # 下影线（从实体底部到最低价）
+        bottom_wick_end = min(open_price, close_price)  # 实体底部
+        if low_price < bottom_wick_end:
+            ax.plot([timestamp, timestamp], [low_price, bottom_wick_end], 
+                    color=color, linewidth=1.2, alpha=0.7, zorder=1)
+        
+        # 绘制实体（开盘收盘价）
+        height = abs(close_price - open_price)
+        bottom = min(open_price, close_price)
+        
+        if height > 0:  # 只绘制有高度的实体
+            rect = Rectangle((timestamp - width/2, bottom), width, height,
+                            facecolor=color, edgecolor='none', linewidth=0, alpha=0.8, zorder=2)
+            ax.add_patch(rect)
+        else:  # 如果开盘价等于收盘价，绘制一条线
+            ax.plot([timestamp - width/2, timestamp + width/2], [open_price, close_price], 
+                    color=color, linewidth=2.0, alpha=0.8, zorder=2)
+    
+    # 绘制EMA21曲线
+    if 'ema21' in data.columns and not data['ema21'].isna().all():
+        ax.plot(data['timestamp'], data['ema21'], color='#FF6600', linewidth=1.5, label='EMA21', zorder=3)
+    
+    # 设置x轴格式
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+    
+    # 设置标签和标题
+    ax.set_xlabel('Time', fontsize=12)
+    ax.set_ylabel('Price', fontsize=12)
+    ax.set_title(title, fontsize=16, fontweight='bold')
+    
+    # 设置y轴范围
+    ax.set_ylim(min(all_prices) - bottom_buffer, max(all_prices) + top_buffer)
+    
+    # 添加网格
+    ax.grid(True, linestyle='--', alpha=0.3)
+    
+    # 添加图例
+    if 'ema21' in data.columns and not data['ema21'].isna().all():
+        ax.legend(loc='upper left')
+    
+    plt.tight_layout()
+    
+    return fig, ax
+
+
 if __name__ == "__main__":
-    # 获取数据
+    # # 获取数据
+    # from client import ok_client
+    # klines = asyncio.run(ok_client.get_klines("SOL-USDT-SWAP",  15, 200, False))
+    # data = asyncio.run(get_kline_with_ema(klines, 2))
+    # print("Data shape:", data.shape)
+    # print(data.tail())
+    # 
+    # # 示例标记数据
+    # markers = [
+    #     # {'timestamp': '2026-1-08 10:45:00', 'text': 'entry place'},
+    # ]
+    # 
+    # # 绘制K线图并保存 - 显示全部数据（最多200根）
+    # fig, ax = plot_candlestick(data, title="5-min Candlestick Chart", markers=markers)
+    # # plt.show()
+    # # 保存到根目录下的 data 文件夹
+    # root_dir = Path(__file__).parent.parent  # 获取项目根目录
+    # output_path = root_dir / "data" / "kline_chart.png"
+    # plt.savefig(output_path, dpi=200, bbox_inches='tight')
+    # print(f"Candlestick chart saved as {output_path}")
+    # plt.close()  # 关闭图形以释放内存
+
+    # 测试新方法：只绘制最近20根K线
     from client import ok_client
-    klines = asyncio.run(ok_client.get_klines("SOL-USDT-SWAP",  15, 200, False))
+    klines = asyncio.run(ok_client.get_klines("BTC-USDT-SWAP", 15, 200, False))
     data = asyncio.run(get_kline_with_ema(klines, 2))
-    print("Data shape:", data.shape)
-    print(data.tail())
     
-    # 示例标记数据
-    markers = [
-        # {'timestamp': '2026-1-08 10:45:00', 'text': 'entry place'},
-    ]
+    root_dir = Path(__file__).parent.parent
+    fig_recent, ax_recent = plot_recent_klines(data, window=20, title="Recent 20 Bars")
+    output_path_recent = root_dir / "data" / "kline_chart_recent.png"
     
-    # 绘制K线图并保存 - 显示全部数据（最多200根）
-    fig, ax = plot_candlestick(data, title="5-min Candlestick Chart", markers=markers)
-    # plt.show()
-    # 保存到根目录下的 data 文件夹
-    root_dir = Path(__file__).parent.parent  # 获取项目根目录
-    output_path = root_dir / "data" / "kline_chart.png"
-    plt.savefig(output_path, dpi=200, bbox_inches='tight')
-    print(f"Candlestick chart saved as {output_path}")
-    plt.close()  # 关闭图形以释放内存
+    # 确保 data 目录存在
+    output_path_recent.parent.mkdir(parents=True, exist_ok=True)
+    
+    plt.savefig(output_path_recent, dpi=150, bbox_inches='tight')
+    print(f"Recent candlestick chart saved as {output_path_recent}")
+    plt.close()

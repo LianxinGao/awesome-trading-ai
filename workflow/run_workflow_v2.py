@@ -1,4 +1,7 @@
 import asyncio
+import time
+import gc
+
 import matplotlib
 matplotlib.use('Agg')  # 必须在导入 pyplot 之前设置后端，适用于无GUI环境
 import matplotlib.pyplot as plt
@@ -18,6 +21,7 @@ from datetime import datetime
 from filters import time_filter
 from tools import position_calculator
 from coin_configs import USDT_MAX_LOSE_PER_TRADE
+from exp.get_market_cycle_by_ai import run_market_cycle_analysis
 
 TRADE_FEE = 0.0005
 coin_multi = {"BTC-USDT-SWAP": 0.01, "ETH-USDT-SWAP": 0.1, "SOL-USDT-SWAP": 1}
@@ -32,7 +36,6 @@ def get_thread_semaphore():
     """获取全局线程信号量，如果不存在则创建"""
     global _thread_semaphore
     if _thread_semaphore is None:
-        import asyncio
         try:
             loop = asyncio.get_running_loop()
             _thread_semaphore = asyncio.Semaphore(4)  # 最多同时4个线程任务
@@ -106,6 +109,25 @@ def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=N
 
 
 async def find_trade_chance():
+    cycle_tasks = []
+    for coin in target_coins:
+        task = run_market_cycle_analysis(coin['inst_id'], coin['precision'])
+        cycle_tasks.append(task)
+
+    start_time = time.time()
+    kline_cycle_results = await asyncio.gather(*cycle_tasks)
+    end_time = time.time()
+    print(f"AI 并发任务总耗时: {end_time - start_time:.2f} 秒")
+
+    kline_cycle_results_dict = {coin['inst_id']: coin for coin in kline_cycle_results}
+    # 等到seconds>2执行后面的任务
+    while True:
+        now = datetime.now()
+        if 2 <= now.second < 50:
+            break
+        print(f"当前时间 {now.strftime('%H:%M:%S')}，等待 K 线更新（目标秒数 >= 5）...")
+        await asyncio.sleep(1)
+
     kline_tasks = []
     for coin in target_coins:
         task = _get_klines(coin['inst_id'], coin['intervals'], coin['limit'], coin['precision'], coin['sz'])
@@ -122,7 +144,8 @@ async def find_trade_chance():
 
         for coin in kline_results:
             task = asyncio.create_task(run_inst(coin['inst_id'], coin['klines_target_cycle'], coin['klines_high_cycle'],
-                                                 coin['precision'], coin['sz']))
+                                                 coin['precision'], coin['sz'],
+                                                kline_cycle_results_dict[coin['inst_id']]['data']))
             ai_tasks.append(task)
 
         # 流式处理：每个任务完成就立即处理结果
@@ -287,10 +310,9 @@ async def _get_klines(inst_id: str, intervals: list[int], limit: int, precision:
     return data_dict
 
 
-async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: int, sz: float):
+async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: int, sz: float, market_cycle_list: list[dict]):
     # 优化：限制并发线程数量，避免创建过多线程导致CPU占用过高
     # 使用全局信号量限制同时运行的线程任务数量
-    import asyncio
     semaphore = get_thread_semaphore()
     if semaphore is None:
         # 如果信号量不存在，创建新的（事件循环已存在）
@@ -302,19 +324,15 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
         async with semaphore:
             return await asyncio.to_thread(func, *args)
     
-    # 并发执行所有同步阻塞操作
-    # 1. 并发计算所有市场周期模式
-    # 注意：get_single_mode 内部已经有 copy，这里不需要再 copy
-    mode_tasks = [
-        limited_to_thread(classifier.get_single_mode, klines_target_cycle, 20),
-        limited_to_thread(classifier.get_single_mode, klines_target_cycle, 40),
-        limited_to_thread(classifier.get_single_mode, klines_target_cycle, 60),
-        limited_to_thread(classifier.get_single_mode, klines_target_cycle, 80),
-        limited_to_thread(classifier.get_single_mode, klines_high_cycle, 20),
-        limited_to_thread(classifier.get_single_mode, klines_high_cycle, 40),
-    ]
-    modes = await asyncio.gather(*mode_tasks)
-    mode_target_20, mode_target_40, mode_target_60, mode_target_80, mode_high_20, mode_high_40 = modes
+    # 建立 ID 到 market_cycle 的映射字典，避免多次遍历列表
+    cycle_map = {x['id']: x['market_cycle'] for x in market_cycle_list}
+    
+    mode_target_20 = cycle_map.get(2, "Unknown")
+    mode_target_40 = cycle_map.get(4, "Unknown")
+    mode_target_60 = cycle_map.get(6, "Unknown")
+    mode_target_80 = cycle_map.get(8, "Unknown")
+    mode_high_20 = cycle_map.get(12, "Unknown")
+    mode_high_40 = cycle_map.get(14, "Unknown")
 
     print(f'{inst_id} target 20周期: {mode_target_20}')
     print(f'{inst_id} target 40周期: {mode_target_40}')
@@ -341,7 +359,6 @@ async def run_inst(inst_id, klines_target_cycle, klines_high_cycle, precision: i
     
     # 优化：使用完后显式释放 DataFrame 内存
     del klines_target_cycle_data, klines_high_cycle_data
-    import gc
     gc.collect()  # 强制垃圾回收释放 DataFrame 内存
 
     auto_user_prompt = auto_trade_user_prompts.format(latest_klines_15min=last_10_str_target_cycle,
