@@ -109,10 +109,20 @@ def draw_klines(klines_data, title, markers=None, entry_price=None, entry_type=N
 
 
 async def find_trade_chance():
+    semaphore = get_thread_semaphore()
+    
+    def run_analysis_sync(inst_id, precision):
+        """同步包装器，用于在独立线程中执行异步分析任务"""
+        return asyncio.run(run_market_cycle_analysis(inst_id, precision))
+
     cycle_tasks = []
     for coin in target_coins:
-        task = run_market_cycle_analysis(coin['inst_id'], coin['precision'])
-        cycle_tasks.append(task)
+        # 使用 asyncio.to_thread 将每个币种的分析任务分发到独立线程执行
+        # 并通过信号量限制总并发数。注意使用默认参数捕获循环变量。
+        async def limited_task(c=coin):
+            async with semaphore:
+                return await asyncio.to_thread(run_analysis_sync, c['inst_id'], c['precision'])
+        cycle_tasks.append(limited_task())
 
     start_time = time.time()
     kline_cycle_results = await asyncio.gather(*cycle_tasks)
@@ -125,7 +135,7 @@ async def find_trade_chance():
         now = datetime.now()
         if 2 <= now.second < 50:
             break
-        print(f"当前时间 {now.strftime('%H:%M:%S')}，等待 K 线更新（目标秒数 >= 5）...")
+        print(f"当前时间 {now.strftime('%H:%M:%S')}，等待 K 线更新（目标秒数 >= 2）...")
         await asyncio.sleep(1)
 
     kline_tasks = []
