@@ -16,5 +16,5 @@ for coin_config in target_coins:
     ok_client.set_leverage(inst_id, leverage, TdMode.CROSS, 'short')
     print(f"设置{inst_id}的合约杠杆为{leverage}倍")
 
-trading_scheduler = TradingScheduler(agent_func=run_workflow, time_interval=15)
-asyncio.run(trading_scheduler.start_with_immediate_execution())
+trading_scheduler = TradingScheduler(agent_func=run_workflow, time_interval=15, target_minute=14, target_second=40)
+asyncio.run(trading_scheduler.start())

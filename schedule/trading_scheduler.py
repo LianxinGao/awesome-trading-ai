@@ -9,16 +9,21 @@ from client.ok_models import TdMode
 class TradingScheduler:
     """交易调度器，负责定时执行交易决策"""
     
-    def __init__(self, agent_func: Callable, time_interval: int = 15):
+    def __init__(self, agent_func: Callable, time_interval: int = 15, target_minute: int = None, target_second: int = 2):
         """
         初始化调度器
         
         Args:
             agent_func: 要执行的交易代理函数
+            time_interval: 检查间隔（分钟）
+            target_minute: 目标分钟（可选，如果设置，则在每个周期的该分钟执行）
+            target_second: 目标秒数（默认2秒）
         """
         self.agent_func = agent_func
         self.running = False
         self.time_interval = time_interval
+        self.target_minute = target_minute
+        self.target_second = target_second
         self.current_task = None  # 跟踪当前执行的任务，防止重叠执行
 
         # result = ok_client.set_leverage(config.TRADING_INST_ID, config.LEVERAGE, TdMode.CROSS)
@@ -35,8 +40,13 @@ class TradingScheduler:
             microsecond=0
         )
         
-        # 下次运行时间 = 当前周期开始时间 + x分
-        next_run = current_cycle_start + timedelta(minutes=self.time_interval, seconds=2)
+        if self.target_minute is not None:
+            # 如果指定了目标分钟，则在当前周期的该分钟执行
+            # 使用 timedelta 避免 minute 超过 59 的问题
+            next_run = current_cycle_start + timedelta(minutes=self.target_minute, seconds=self.target_second)
+        else:
+            # 否则，下次运行时间 = 当前周期开始时间 + x分 + 偏移秒
+            next_run = current_cycle_start + timedelta(minutes=self.time_interval, seconds=self.target_second)
         
         # 如果已经过了这个时间，则计算下一个x分钟周期
         if next_run <= now:
