@@ -45,8 +45,8 @@ def get_thread_semaphore():
     return _thread_semaphore
 
 # 价格调整系数
-long_target_coef = 1  # 做多止盈系数 (稍微调低，更容易成交)
-short_target_coef = 1  # 做空止盈系数 (稍微调高，更容易成交)
+long_target_coef = 0.999  # 做多止盈系数 (稍微调低，更容易成交)
+short_target_coef = 1.001  # 做空止盈系数 (稍微调高，更容易成交)
 long_stop_loss_coef = 0.996  # 做多止损系数 (稍微调低，增加容错)
 short_stop_loss_coef = 1.004  # 做空止损系数 (稍微调高，增加容错)
 
