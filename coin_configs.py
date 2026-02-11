@@ -10,5 +10,5 @@ USDT_MAX_LOSE_PER_TRADE = 2
 
 
 evaluate_configs = {
-    "begin": "2026-02-07 00:00:00"
+    "begin": "2026-02-11 22:50:00"
 }
